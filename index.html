@@ -286,7 +286,6 @@ img.prev{width:100%;border-radius:var(--r-md);margin:10px 0;border:1px solid var
 a{color:var(--accent)}
 .ic-svg{display:block;flex-shrink:0}
 </style>
-
 <body>
 <header>
   <div class="hd-row">
@@ -444,7 +443,6 @@ a{color:var(--accent)}
 </nav>
 <div class="overlay" id="ovl" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
-
 <script>
 /* ============================================================
    识食 · 应用逻辑
@@ -1005,12 +1003,11 @@ function doReset(){localStorage.removeItem(KEY);location.reload()}
     if(s)s.outerHTML=ic(navIcons[b.dataset.t]||"today",22);
   });
   applyTheme();
-  renderToday();
+  go("tab-today");   // 激活默认页（.tab 默认 display:none，必须走 go 才会显示）
   if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
   }
 })();
-
 </script>
 </body>
 </html>
