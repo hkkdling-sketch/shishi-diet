@@ -38,6 +38,16 @@ const ICON = {
   camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
   drop: '<path d="M12 3.5s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+
+  // 库存管家扩展
+  cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3.5h2.6l2.4 12h11.2"/><path d="M6 7h14l-1.6 8.5"/>',
+  cal: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3v4M16 3v4"/><path d="M8.5 14h2M13.5 14h2M8.5 17.5h2M13.5 17.5h2"/>',
+  chart: '<path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 16.5v-4M12.5 16.5V9M17 16.5v-6.5"/>',
+  clockFast: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.2l2.6 1.8"/><path d="M4.5 5.5 2 3M21.5 5.5 24 3"/>',
+  scaleUp: '<path d="M4 17h16"/><path d="M8 17V9M12 17V5M16 17v-6"/><path d="M13.5 3.5 16 5l-2.5 1.5"/>',
+  leaf: '<path d="M20 4c0 9-5.5 14-11 14-2.8 0-5-1.7-5-4.5C4 8.5 11 4 20 4z"/><path d="M4 20c3-6 8-9.5 13-11"/>',
+  money: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10"/><path d="M14.6 9.4c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.7.8-2.7 2s1.1 1.7 2.7 2c1.6.3 2.8.8 2.8 2s-1.3 2-2.8 2c-1.2 0-2.2-.5-2.7-1.4"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
 };
 /** 生成图标 SVG 字符串。size 默认 24 */
 function icon(name, size = 24, cls = '') {
