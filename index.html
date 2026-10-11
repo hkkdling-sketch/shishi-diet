@@ -111,6 +111,13 @@ details.card summary::-webkit-details-marker{display:none}
 details.card summary .chev{margin-left:auto;color:var(--ink-3);transition:transform .25s}
 details.card[open] summary .chev{transform:rotate(90deg)}
 details.card[open] summary{margin-bottom:14px}
+/* 折叠的手动添加区：关闭时绝不露出内部表单 */
+#addBox{overflow:hidden}
+#addBox:not([open]) > *:not(summary){display:none}
+#addBox > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:7px;
+  font-size:14px;font-weight:600;color:var(--ink);width:100%}
+#addBox > summary::-webkit-details-marker{display:none}
+#addBox > summary .chev{margin-left:auto;color:var(--ink-3);transition:transform .25s}
 
 /* ---------- 表单 ---------- */
 .fld{margin-bottom:12px}
@@ -282,9 +289,107 @@ img.prev{width:100%;border-radius:var(--r-md);margin:10px 0;border:1px solid var
 .grp-title{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.06em;margin:16px 0 4px;display:flex;align-items:center;gap:6px}
 .grp-title:first-child{margin-top:4px}
 
+/* ---------- 库存管家：概览卡 ---------- */
+.invh{padding:15px 16px}
+.invh-top{display:flex;align-items:center;gap:14px}
+.invh-top>div:first-child{flex:1;min-width:0}
+.invh-lab{font-size:11.5px;color:var(--ink-3);letter-spacing:.05em;font-weight:500;
+  display:flex;align-items:center;gap:5px}
+.invh-big{font-size:29px;font-weight:650;letter-spacing:-.025em;line-height:1.12;
+  font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
+.invh-big span{font-size:15px;font-weight:500;color:var(--ink-3);margin-left:3px}
+.invh-sub{font-size:12.5px;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
+.invh-ring{
+  --p:0;flex-shrink:0;width:72px;height:72px;border-radius:50%;
+  background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--surface-2) 0);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.invh-ring::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--surface)}
+.invh-ring>div{position:relative;text-align:center;line-height:1.15}
+.invh-ring b{display:block;font-size:20px;font-weight:650;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--accent)}
+.invh-ring span{font-size:9.5px;color:var(--ink-3)}
+.invh-foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line-2);
+  font-size:12px;color:var(--ink-3);line-height:1.55}
+
+/* ---------- 缺口分析 ---------- */
+.gaplist{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+.gaprow{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 0;font-size:13.5px;border-bottom:1px solid var(--line)}
+.gaprow:last-child{border-bottom:none}
+.gaprow .gl{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.gaprow .gl i{width:8px;height:8px;border-radius:3px;flex-shrink:0}
+.gaprow b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.sugg{display:flex;align-items:center;gap:7px;margin-top:11px;padding:10px 12px;
+  background:var(--accent-soft);border-radius:10px;font-size:12.5px;color:var(--accent-ink);line-height:1.5}
+.sugg .ic-svg{flex-shrink:0;color:var(--accent)}
+.sugg b{font-weight:600;font-variant-numeric:tabular-nums}
+.sugg span{flex:1;min-width:0}
+.sugg .btn-s{padding:6px 10px;font-size:12px}
+
+/* ---------- 筛选标签 ---------- */
+.ftabs{display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;padding-bottom:2px}
+.ftabs::-webkit-scrollbar{display:none}
+.ftab{
+  flex-shrink:0;border:1px solid var(--line);background:var(--surface);
+  padding:7px 13px;border-radius:9px;font-size:12.5px;color:var(--ink-2);
+  font-family:inherit;cursor:pointer;transition:background .18s,border-color .18s,color .18s;
+  display:inline-flex;align-items:center;gap:6px;font-weight:500;
+}
+.ftab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.ftab em{font-style:normal;font-size:11px;font-variant-numeric:tabular-nums;
+  background:var(--surface-2);color:var(--ink-3);padding:1px 6px;border-radius:5px}
+.ftab.on em{background:rgba(255,255,255,.24);color:#fff}
+
+/* ---------- 库存项：进度条 ---------- */
+.gbar{height:4px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:7px}
+.gbar>i{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.item.inv{align-items:flex-start;padding:13px 0}
+.item.inv .btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.item.inv .btns .btn-s,.item.inv .btns .btn-r{
+  padding:6px 11px;font-size:12px;min-width:56px;display:inline-flex;
+  align-items:center;justify-content:center;gap:4px;
+}
+.item.inv .btns .btn-s .ic-svg,.item.inv .btns .btn-r .ic-svg{margin:0}
+
+/* ---------- 采购清单 ---------- */
+.shoplist{border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:44vh;overflow-y:auto}
+.shoprow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 13px;border-bottom:1px solid var(--line);font-size:13.5px}
+.shoprow:last-child{border-bottom:none}
+.shoprow .nm{font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.shoprow .dt{font-size:11.5px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.shoprow b{font-variant-numeric:tabular-nums;color:var(--accent);flex-shrink:0;font-weight:600}
+.shopfoot{margin:12px 0 14px;padding:10px 13px;background:var(--surface-2);border-radius:9px;
+  font-size:12.5px;color:var(--ink-2);text-align:center;font-variant-numeric:tabular-nums}
+
+/* ---------- 食材详情 ---------- */
+.dtl{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.dtl>div{background:var(--surface);padding:11px 13px;display:flex;flex-direction:column;gap:3px}
+.dtl>div span{font-size:11.5px;color:var(--ink-3)}
+.dtl>div b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* 14 天消耗柱（紧凑） */
+.wkc{display:flex;align-items:flex-end;gap:3px;height:64px;padding:0 1px}
+.wkr{flex:1;display:flex;align-items:flex-end;justify-content:center;height:100%}
+.wkr i{width:100%;max-width:16px;border-radius:3px 3px 1px 1px;background:var(--accent);
+  opacity:.82;min-height:2px;transition:height .45s cubic-bezier(.4,0,.2,1)}
+.wkr.today i{opacity:1;background:var(--accent-ink)}
+
+/* 抽屉内动态提示 */
+.eatleft{font-size:12.5px;color:var(--ink-3);margin-top:9px;line-height:1.6;min-height:18px}
+.btn-s.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
 .disclaimer{text-align:center;padding:10px 0 14px;font-size:11.5px;color:var(--ink-3);line-height:1.7}
 a{color:var(--accent)}
 .ic-svg{display:block;flex-shrink:0}
+
+/* 深色模式：抽屉内强调底 */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .ftab.on em{background:rgba(255,255,255,.2)}
+}
 </style>
 <body>
 <header>
@@ -303,9 +408,14 @@ a{color:var(--accent)}
 <!-- ============ 库存 ============ -->
 <div class="tab" id="tab-stock">
   <div id="stockAlert"></div>
-  <div class="card">
-    <h3><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>添加食物到库存</h3>
-    <div class="fld searchbox">
+  <!-- 概览 / 提醒 / 缺口（由 renderStock 填充） -->
+  <div id="stockBox"></div>
+  <div id="stockActions"></div>
+
+  <!-- 手动添加：低频操作，默认折叠，避免每天进来先滚过一张大表单 -->
+  <details class="card" id="addBox">
+    <summary><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>手动添加食物<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></summary>
+    <div class="fld searchbox" style="margin-top:14px">
       <label>从内置食物库搜索（每 100g 营养）</label>
       <input id="q" placeholder="鸡胸肉 / 彩椒 / 鸡蛋 / 荞麦面" autocomplete="off">
       <div class="sug" id="sug"></div>
@@ -315,8 +425,7 @@ a{color:var(--accent)}
       <div class="fld"><label>&nbsp;</label><button class="btn-g" onclick="addFromDb()">加入库存</button></div>
     </div>
     <div class="hint"><svg class="ic-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg><span>包装食品去「拍照」页识别营养成分表更准</span></div>
-  </div>
-  <div id="stockBox"></div>
+  </details>
 </div>
 
 <!-- ============ 拍照 ============ -->
@@ -358,6 +467,16 @@ a{color:var(--accent)}
         <span class="chip neutral">识别结果 · 请核对</span>
       </div>
       <div class="fld"><label>食物名称</label><input id="rN"></div>
+      <div class="fld"><label>归类（决定库存里的分组）</label>
+        <select id="rCat">
+          <option value="protein">肉蛋奶 / 蛋白质类</option>
+          <option value="staple">主食</option>
+          <option value="veg">蔬菜</option>
+          <option value="fruit">水果</option>
+          <option value="fat">油脂坚果</option>
+          <option value="other" selected>其他</option>
+        </select>
+      </div>
       <div class="grid2">
         <div class="fld"><label>热量 kcal/100g</label><input id="rK" type="number" inputmode="decimal"></div>
         <div class="fld"><label>蛋白质 g/100g</label><input id="rP" type="number" inputmode="decimal"></div>
@@ -548,6 +667,25 @@ function load(){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("存储空间不足")}}
 function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/** 按食物名猜分类：内置库精确匹配 → 部分匹配 → 关键字规则 */
+function guessCat(name){
+  const n=(name||"").toLowerCase().trim();
+  if(!n)return "other";
+  const hit=FOODS.find(f=>f.n.toLowerCase()===n);
+  if(hit)return hit.cat;
+  const part=FOODS.find(f=>f.n.toLowerCase().includes(n)||n.includes(f.n.toLowerCase()));
+  if(part)return part.cat;
+  const KW=[
+    [/肉|鸡|鸭|牛|猪|羊|鱼|虾|蟹|贝|蛋|奶|乳|豆腐|豆浆|肠|胸|腿|翅|protein/i,"protein"],
+    [/米|饭|面|粉|馒|包|饺|糙|荞|麦|燕麦|玉米|薯|土豆|staple|rice|bread|pasta/i,"staple"],
+    [/菜|蔬|椒|瓜|茄|葱|姜|蒜|菇|蘑|菠|芹|萝卜|西兰花|生菜|白菜|番茄|veg/i,"veg"],
+    [/果|苹|香蕉|橙|橘|柚|葡|桃|梨|莓|荔枝|芒果|猕猴桃|西瓜|fruit/i,"fruit"],
+    [/油|坚果|花生|核桃|杏仁|腰果|芝麻|黄油|橄榄|巴旦木|开心果|榛子|碧根果|夏威夷果|瓜子|南瓜子|松子|nut|oil/i,"fat"],
+  ];
+  for(const [re,c] of KW) if(re.test(n)) return c;
+  return "other";
+}
 const $=id=>document.getElementById(id);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),2200)}
@@ -646,6 +784,26 @@ function renderToday(){
      <button class="btn-r" onclick="delLog(${i})">删</button></div></div>`).join("");
   h+=`</div>`;
 
+  // ---- 库存状态：首页也提醒，形成每日回访钩子 ----
+  if(S.inv.length){
+    const low=S.inv.filter(it=>it.g<=lowThreshold(it));
+    const soon=S.inv.filter(it=>{const dd=daysLeft(it);return dd!=null&&dd<=3&&it.g>lowThreshold(it)});
+    if(low.length||soon.length){
+      h+=`<div class="card" style="border-color:${low.length?"var(--warn)":"var(--line)"}">
+        <h3>${ic("cart",18)}库存提醒${low.length?`<span class="count" style="color:var(--warn)">${low.length} 样需补货</span>`:`<span class="count">${soon.length} 样快吃完</span>`}</h3>`;
+      if(low.length){
+        h+=`<div class="dt" style="margin-bottom:9px">${low.slice(0,4).map(x=>esc(x.n)+" <b style=\"color:var(--warn)\">"+x.g+"g</b>").join(" · ")}${low.length>4?` 等 ${low.length} 样`:""}</div>`;
+      }
+      if(soon.length){
+        h+=`<div class="dt" style="margin-bottom:9px">${soon.slice(0,3).map(x=>esc(x.n)+" 约 "+Math.floor(daysLeft(x))+" 天").join(" · ")}</div>`;
+      }
+      h+=low.length
+        ?`<button class="btn-o" onclick="go('tab-stock')">去处理 · 生成采购清单</button>`
+        :`<button class="btn-o" onclick="go('tab-stock')">查看库存</button>`;
+      h+=`</div>`;
+    }
+  }
+
   const ex=S.ex[d]||[];
   if(ex.length){
     h+=`<div class="card"><h3>${ic("flame",18)}今日训练<span class="count">${ex.length} 项</span></h3>`
@@ -656,14 +814,19 @@ function renderToday(){
   h+=weekChart(c);
   $("todayBox").innerHTML=h;
 }
-function delLog(i){
-  const d=todayStr();const e=S.log[d][i];
+function delLog(i,day){
+  const d=day||todayStr();
+  const list=S.log[d]||[];
+  const e=list[i];
+  if(!e){save();if(d===todayStr())renderToday();return}
   if(e.iid){
     const it=S.inv.find(x=>x.id===e.iid);
     if(it)it.g=Math.round((it.g+e.g)*10)/10;
-    else if(e.b)S.inv.push({id:e.iid,n:e.n,g:e.g,k:e.b.k,p:e.b.p,f:e.b.f,c:e.b.c,cat:e.b.cat});
+    else if(e.b)S.inv.push({id:e.iid,n:e.n,g:e.g,k:e.b.k,p:e.b.p,f:e.b.f,c:e.b.c,cat:e.b.cat,low:e.b.low});
   }
-  S.log[d].splice(i,1);save();renderToday();
+  list.splice(i,1);save();
+  if(d===todayStr())renderToday();
+  if(typeof renderStock==="function"&&$("tab-stock"))renderStock();   // 同步库存视图
   toast(e.iid?"已删除，退回库存":"已删除");
 }
 function dstr(o){const d=new Date();d.setDate(d.getDate()-o);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -705,73 +868,362 @@ function quickEat(i){
 }
 function delEx(i){const d=todayStr();S.ex[d].splice(i,1);save();renderToday()}
 
-/* ================= 库存 ================= */
-function invTotals(){
-  let k=0,p=0,f=0,c=0;
-  S.inv.forEach(it=>{const r=scale(it,it.g);k+=r.k;p+=r.p;f+=r.f;c+=r.c});
-  return {k,p,f,c};
-}
-function renderStock(){
-  // 低量提醒
-  const low=S.inv.filter(it=>it.g<=100);
-  const al=$("stockAlert");
-  if(low.length){
-    al.innerHTML=`<div class="card" style="border-color:var(--warn);background:var(--warn-soft)">
-      <div style="display:flex;gap:9px;align-items:flex-start;color:var(--warn)">
-        ${ic("alert",18,'style="margin-top:1px"')}
-        <div style="flex:1">
-          <div style="font-size:13.5px;font-weight:600">${low.length} 样快吃完了</div>
-          <div style="font-size:12.5px;margin-top:3px;color:var(--ink-2)">${low.slice(0,4).map(x=>esc(x.n)+" "+x.g+"g").join(" · ")}${low.length>4?` 等 ${low.length} 样`:""}</div>
-        </div>
-      </div></div>`;
-  } else al.innerHTML="";
+/* ================= 库存管家 ================= */
 
-  let h=`<div class="card"><h3>${ic("box",18)}我的库存<span class="count">${S.inv.length} 样</span></h3>`;
-  if(!S.inv.length){
-    h+=`<div class="empty">${ic("box",32,'style="color:var(--line-2);margin:0 auto 8px"')}库存是空的<br>去超市买完东西，拍照识别后加进来</div>`;
-  } else {
-    // 按分类分组
-    CAT_ORDER.forEach(cat=>{
-      const items=S.inv.filter(it=>it.cat===cat);
-      if(!items.length)return;
-      h+=`<div class="grp-title">${CAT_LABEL[cat]}<span style="color:var(--line-2)">·</span>${items.length}</div>`;
-      h+=items.map(it=>{
-        const r=scale(it,it.g);
-        const lowFlag=it.g<=100;
-        return `<div class="item inv"><div>
-          <div class="nm">${esc(it.n)}${lowFlag?`<span class="chip warn">快用完</span>`:""}</div>
-          <div class="dt">剩余 ${it.g} g ｜ P ${r.p.toFixed(1)} · F ${r.f.toFixed(1)} · C ${r.c.toFixed(1)} g</div>
-          <div class="tagk" style="margin-top:3px">${Math.round(r.k)} kcal</div></div>
-          <div class="btns">
-            <button class="btn-s" style="background:var(--accent-soft);color:var(--accent);border-color:transparent" onclick="eatSheet('${it.id}')">吃掉</button>
-            <button class="btn-s" onclick="restockSheet('${it.id}')">补货</button>
-            <button class="btn-r" onclick="delInvAsk('${it.id}')">删除</button>
-          </div></div>`}).join("");
-    });
-    const t=invTotals();
-    h+=`<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)">
-      <div class="hint" style="margin:0 0 6px"><span>库存剩余营养合计</span></div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;font-variant-numeric:tabular-nums">
-        <span><b style="color:var(--accent)">${Math.round(t.k)}</b> <span style="color:var(--ink-3)">kcal</span></span>
-        <span><b style="color:var(--d-protein)">${t.p.toFixed(1)}</b> <span style="color:var(--ink-3)">蛋白 g</span></span>
-        <span><b style="color:var(--d-fat)">${t.f.toFixed(1)}</b> <span style="color:var(--ink-3)">脂肪 g</span></span>
-        <span><b style="color:var(--d-carb)">${t.c.toFixed(1)}</b> <span style="color:var(--ink-3)">碳水 g</span></span>
+/** 库存剩余营养合计 */
+function invTotals(){
+  let k=0,p=0,f=0,c=0,g=0;
+  S.inv.forEach(it=>{const r=scale(it,it.g);k+=r.k;p+=r.p;f+=r.f;c+=r.c;g+=it.g});
+  return {k,p,f,c,g};
+}
+
+/** 近 N 天某食材的日均消耗（g/天）。返回 null 表示样本不足。 */
+function dailyBurn(itemId,days=7){
+  let total=0,seen=0;
+  for(let i=0;i<days;i++){
+    const key=dstr(i);
+    const list=S.log[key]||[];
+    const hit=list.filter(e=>e.iid===itemId);
+    if(hit.length)seen++;
+    hit.forEach(e=>total+=e.g);
+  }
+  // 至少要有 2 天记录才给预测，否则噪声太大
+  if(seen<2)return null;
+  return total/days;
+}
+
+/** 全库日均总消耗（用于算「整仓还能撑几天」） */
+function dailyBurnAll(days=7){
+  let total=0;
+  for(let i=0;i<days;i++){
+    const list=S.log[dstr(i)]||[];
+    list.forEach(e=>total+=e.g);
+  }
+  return total/days;
+}
+
+/** 预测某食材还能吃几天 */
+function daysLeft(it){
+  const b=dailyBurn(it.id);
+  if(!b||b<=0)return null;
+  return it.g/b;
+}
+
+/** 近 N 天实际吃掉的营养，用于「缺口分析」 */
+function recentIntake(days=7){
+  let k=0,p=0,f=0,c=0,n=0;
+  for(let i=0;i<days;i++){
+    const list=S.log[dstr(i)]||[];
+    if(list.length)n++;
+    list.forEach(e=>{k+=e.k;p+=e.p;f+=e.f;c+=e.c});
+  }
+  return {k,p,f,c,days,loggedDays:n};
+}
+
+/** 阈值：可自定义，默认 100g。按食材记录低量门限 */
+function lowThreshold(it){ return it.low!=null?it.low:100 }
+
+/** 采购清单：低量食材 + 建议补货量（补到够吃 7 天，或至少补一倍现有量） */
+function shoppingList(){
+  const out=[];
+  S.inv.forEach(it=>{
+    const th=lowThreshold(it);
+    if(it.g>th)return;
+    const b=dailyBurn(it.id);
+    let suggest;
+    if(b&&b>0){
+      // 按实际消耗速度补到够吃 7 天
+      suggest=Math.max(Math.ceil((b*7-it.g)/50)*50,100);
+    }else{
+      // 没有消耗数据 → 用一次性合理量
+      suggest=it.g>0?Math.max(Math.ceil(it.g*2/100)*100,200):500;
+    }
+    out.push({id:it.id,n:it.n,g:it.g,suggest,cat:it.cat,urgent:it.g<=th*0.3,burn:b});
+  });
+  // 急的排前面，其次按剩余百分比
+  return out.sort((a,b)=>(b.urgent-a.urgent)||(a.g-b.g));
+}
+
+/** 按当前目标反推：今天还缺多少蛋白/热量 */
+function gapToday(){
+  const c=calc(); if(!c)return null;
+  const t=dayTotals();
+  return {
+    kcal:Math.max(0,c.target-t.k),
+    p:Math.max(0,c.pg-t.p),
+    f:Math.max(0,c.fg-t.f),
+    c:Math.max(0,c.cg-t.c),
+  };
+}
+
+/** 用库存里的食材凑出还缺的蛋白 → 补货建议 */
+function proteinSuggest(){
+  const g=gapToday(); if(!g||g.p<=1)return null;
+  // 只在蛋白类里挑，按蛋白密度排序（每 100kcal 的蛋白克数）
+  const cands=S.inv.filter(it=>it.cat==="protein").map(it=>{
+    const d=(it.p*it.k>0)?(it.p*100/it.k):0;   // 蛋白/100kcal
+    return {it,d};
+  }).filter(x=>x.d>0).sort((a,b)=>b.d-a.d);
+  if(!cands.length)return null;
+  const best=cands[0].it;
+  // 需要多少克才补足缺口
+  const need=Math.round(g.p/(best.p/100)/10)*10;
+  return {food:best,need,pc:Math.round(best.p/100*g.p*10)/10};
+}
+
+/* —— 库存主界面 —— */
+let stockView="all";   // all | low | soon
+
+function renderStock(){
+  // ---- 顶部概览卡 ----
+  const t=invTotals();
+  const gap=gapToday();
+  const burnAll=dailyBurnAll(7);
+  const overallDays=burnAll>0?t.g/burnAll:null;
+
+  let head=`<div class="card invh">
+    <div class="invh-top">
+      <div>
+        <div class="invh-lab">库存总计</div>
+        <div class="invh-big">${Math.round(t.g)}<span>g</span></div>
+        <div class="invh-sub">${Math.round(t.k)} kcal · 蛋白 ${t.p.toFixed(0)}g</div>
+      </div>
+      <div class="invh-ring" style="--p:${burnAll>0?Math.min(100,Math.max(4,Math.round(Math.min(overallDays,14)/14*100))):0}">
+        <div>
+          <b>${overallDays!=null?Math.floor(overallDays):"—"}</b>
+          <span>${overallDays!=null?"天":"待记录"}</span>
+        </div>
+      </div>
+    </div>
+    <div class="invh-foot">
+      <span>${burnAll>0?`按近 7 天速度，日均消耗 ${Math.round(burnAll)}g · 还能吃 ${Math.floor(overallDays)} 天`:"记录几天饮食后，这里会预测还能吃几天"}</span>
+    </div>
+  </div>`;
+
+  // ---- 智能提示 ----
+  const low=S.inv.filter(it=>it.g<=lowThreshold(it));
+  const urgent=low.filter(it=>it.g<=lowThreshold(it)*0.3);
+  if(low.length){
+    head+=`<div class="card" style="border-color:var(--warn);background:var(--warn-soft)">
+      <div style="display:flex;gap:9px;align-items:flex-start;color:var(--warn)">
+        ${ic("alert",18,'style="margin-top:1px;flex-shrink:0"')}
+        <div style="flex:1">
+          <div style="font-size:13.5px;font-weight:600">${low.length} 样需要补货${urgent.length?` · ${urgent.length} 样告急`:""}</div>
+          <div style="font-size:12.5px;margin-top:3px;color:var(--ink-2)">${low.slice(0,3).map(x=>esc(x.n)+" "+x.g+"g").join(" · ")}${low.length>3?` 等 ${low.length} 样`:""}</div>
+        </div>
+        <button class="btn-s" style="flex-shrink:0;background:transparent;border-color:var(--warn);color:var(--warn)" onclick="showShopping()">采购清单</button>
       </div></div>`;
   }
-  h+=`</div>`;
-  $("stockBox").innerHTML=h;
+
+  // ---- 缺口分析 ----
+  if(gap && (gap.k>0||gap.p>0)){
+    const ps=proteinSuggest();
+    const opt=[];
+    if(gap.k>0)opt.push(`<div class="gaprow"><span class="gl"><i style="background:var(--accent)"></i>热量</span><b>${Math.round(gap.k)} kcal</b></div>`);
+    if(gap.p>1)opt.push(`<div class="gaprow"><span class="gl"><i style="background:var(--d-protein)"></i>蛋白质</span><b>${Math.round(gap.p)} g</b></div>`);
+    if(gap.f>1)opt.push(`<div class="gaprow"><span class="gl"><i style="background:var(--d-fat)"></i>脂肪</span><b>${Math.round(gap.f)} g</b></div>`);
+    head+=`<div class="card">
+      <h3>${ic("target",18)}今日还差<span class="count">库存可补</span></h3>
+      <div class="gaplist">${opt.join("")}</div>
+      ${ps?`<div class="sugg">${ic("bolt",14)}<span>吃 <b>${ps.need}g ${esc(ps.food.n)}</b> 可补足蛋白</span>
+        <button class="btn-s" style="margin-left:auto;flex-shrink:0" onclick="eatSheet('${ps.food.id}')">去记录</button></div>`
+        :`<div class="sugg" style="background:var(--surface-2);color:var(--ink-3)">${ic("bolt",14)}<span>库存里还没有能精准补蛋白的食材，先去添加</span></div>`}
+    </div>`;
+  }
+
+  // ---- 筛选标签 ----
+  const soonCount=S.inv.filter(it=>{const d=daysLeft(it);return d!=null&&d<=3}).length;
+  let body=`<div class="card">
+    <h3>${ic("box",18)}我的库存<span class="count">${S.inv.length} 样</span></h3>`;
+
+  if(!S.inv.length){
+    body+=`<div class="empty">${ic("box",32,'style="color:var(--line-2);margin:0 auto 8px"')}库存是空的<br>去超市买完东西，拍照识别后加进来</div>`;
+  } else {
+    // 筛选器
+    const tabs=[["all","全部",S.inv.length],["soon","快吃完",soonCount],["low","需补货",low.length]];
+    body+=`<div class="ftabs">${tabs.map(([k,lab,n])=>
+      `<button class="ftab${stockView===k?" on":""}" onclick="setStockView('${k}')">${lab}${n?`<em>${n}</em>`:""}</button>`).join("")}</div>`;
+
+    let items=S.inv;
+    if(stockView==="low")items=S.inv.filter(it=>it.g<=lowThreshold(it));
+    if(stockView==="soon")items=S.inv.filter(it=>{const d=daysLeft(it);return d!=null&&d<=3});
+
+    if(!items.length){
+      body+=`<div class="empty" style="padding:22px 12px">${
+        stockView==="low"?"没有需要补货的食材，库存充足":
+        "还没有食材吃出规律<br><span style=\"font-size:12px\">记录几天后，这里会按消耗速度提醒"
+      }</div>`;
+    } else {
+      CAT_ORDER.forEach(cat=>{
+        const group=items.filter(it=>it.cat===cat);
+        if(!group.length)return;
+        body+=`<div class="grp-title">${CAT_LABEL[cat]}<span style="color:var(--line-2)">·</span>${group.length}</div>`;
+        body+=group.map(it=>{
+          const r=scale(it,it.g);
+          const th=lowThreshold(it);
+          const lowFlag=it.g<=th;
+          const d=daysLeft(it);
+          const soonFlag=d!=null&&d<=3;
+          const pct=Math.min(100,it.g<=th?Math.max(6,Math.round(it.g/th*100)):100);
+          return `<div class="item inv">
+            <div style="flex:1;min-width:0">
+              <div class="nm">${esc(it.n)}${lowFlag?`<span class="chip warn">需补货</span>`:""}${soonFlag&&!lowFlag?`<span class="chip neutral">${Math.floor(d)}天吃完</span>`:""}</div>
+              <div class="dt">剩余 <b style="color:var(--ink)">${it.g}</b> g ｜ P ${r.p.toFixed(1)} · F ${r.f.toFixed(1)} · C ${r.c.toFixed(1)} g</div>
+              <div class="gbar"><i style="width:${pct}%;background:${lowFlag?"var(--warn)":"var(--accent)"}"></i></div>
+              <div class="dt" style="margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">
+                <span>${Math.round(r.k)} kcal</span>
+                ${d!=null?`<span${soonFlag?" style=\"color:var(--warn)\"":""}>约还能吃 ${d<1?"<1":Math.floor(d)} 天</span>`:""}
+              </div>
+            </div>
+            <div class="btns">
+              <button class="btn-s" style="background:var(--accent-soft);color:var(--accent);border-color:transparent" onclick="eatSheet('${it.id}')">吃掉</button>
+              <button class="btn-s" onclick="restockSheet('${it.id}')">补货</button>
+              <button class="btn-s" onclick="detailSheet('${it.id}')" aria-label="详情">${ic("chart",15)}</button>
+              <button class="btn-r" onclick="delInvAsk('${it.id}')">${ic("trash",15)}</button>
+            </div></div>`}).join("");
+      });
+    }
+
+    if(stockView==="all"&&items.length){
+      body+=`<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)">
+        <div class="hint" style="margin:0 0 6px"><span>库存剩余营养合计</span></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;font-variant-numeric:tabular-nums">
+          <span><b style="color:var(--accent)">${Math.round(t.k)}</b> <span style="color:var(--ink-3)">kcal</span></span>
+          <span><b style="color:var(--d-protein)">${t.p.toFixed(1)}</b> <span style="color:var(--ink-3)">蛋白 g</span></span>
+          <span><b style="color:var(--d-fat)">${t.f.toFixed(1)}</b> <span style="color:var(--ink-3)">脂肪 g</span></span>
+          <span><b style="color:var(--d-carb)">${t.c.toFixed(1)}</b> <span style="color:var(--ink-3)">碳水 g</span></span>
+        </div></div>`;
+    }
+  }
+  body+=`</div>`;
+  $("stockBox").innerHTML=head+body;
+
+  // ---- 底部批量操作 ----
+  const lowList=shoppingList();
+  let act="";
+  if(S.inv.length){
+    act=`<div class="card">
+      <h3>${ic("bolt",18)}批量操作</h3>
+      <div class="btnrow" style="margin-bottom:8px">
+        <button class="btn-s" style="flex:1" onclick="showShopping()">${ic("cart",15)}采购清单${lowList.length?` (${lowList.length})`:""}</button>
+        ${lowList.length?`<button class="btn-g" style="flex:1" onclick="restockAllLow()">一键补货</button>`:""}
+      </div>
+      <button class="btn-r" style="width:100%" onclick="clearInvAsk()">清空全部库存</button>
+    </div>`;
+  }
+  const sa=$("stockActions");
+  if(sa)sa.innerHTML=act;
 }
+
+function setStockView(v){stockView=v;renderStock()}
+
+/** 采购清单抽屉 */
+function showShopping(){
+  const list=shoppingList();
+  const total=list.reduce((a,x)=>a+x.suggest,0);
+  sheet(`<h3>${ic("cart",18)}采购清单<span class="count">${list.length} 样</span></h3>
+    ${list.length?`
+    <div class="hint" style="margin:0 0 12px"><span>按你近 7 天的实际消耗速度计算，补足后约可吃 7 天</span></div>
+    <div class="shoplist">${list.map(x=>`
+      <div class="shoprow">
+        <div>
+          <div class="nm">${esc(x.n)}${x.urgent?`<span class="chip warn">告急</span>`:""}</div>
+          <div class="dt">现有 ${x.g} g${x.burn?` · 日均 ${x.burn.toFixed(0)} g`:""}</div>
+        </div>
+        <b>+${x.suggest} g</b>
+      </div>`).join("")}</div>
+    <div class="shopfoot">建议采购总量 ${total} g</div>
+    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">关闭</button>
+      <button class="btn-g" onclick="copyShopping()">复制清单</button></div>`
+    :`<div class="empty" style="padding:22px 12px">库存充足<br>没有需要补货的食材</div>
+      <button class="btn-o" onclick="closeSheet()">关闭</button>`}`);
+}
+
+function copyShopping(){
+  const list=shoppingList();
+  const txt="采购清单\n"+list.map(x=>`· ${x.n}  +${x.suggest}g`).join("\n");
+  const done=()=>toast("清单已复制");
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>{toast("复制失败，请长按选择");});
+  }else{
+    const ta=document.createElement("textarea");
+    ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");done()}catch(e){toast("复制失败")}
+    document.body.removeChild(ta);
+  }
+}
+
+/** 单样食材详情：近 14 天消耗曲线 + 预测 */
+function detailSheet(id){
+  const it=S.inv.find(x=>x.id===id);if(!it)return;
+  const th=lowThreshold(it);
+  const d=daysLeft(it);
+  const b=dailyBurn(it.id);
+  // 近 14 天每天吃掉多少
+  const series=[];
+  for(let i=13;i>=0;i--){
+    const key=dstr(i);
+    const g=(S.log[key]||[]).filter(e=>e.iid===id).reduce((a,e)=>a+e.g,0);
+    series.push({key,g,today:i===0});
+  }
+  const mx=Math.max(10,...series.map(s=>s.g));
+  const total14=series.reduce((a,s)=>a+s.g,0);
+  const r=scale(it,it.g);
+  sheet(`<h3>${esc(it.n)}</h3>
+    <div class="dtl">
+      <div><span>剩余</span><b>${it.g} g</b></div>
+      <div><span>热量</span><b>${Math.round(r.k)} kcal</b></div>
+      <div><span>日均消耗</span><b>${b?b.toFixed(0)+" g":"暂无数据"}</b></div>
+      <div><span>预计可吃</span><b style="${d!=null&&d<=3?"color:var(--warn)":""}">${d!=null?(d<1?"不足 1 天":Math.floor(d)+" 天"):"—"}</b></div>
+    </div>
+    <div class="fld"><label>近 14 天消耗</label>
+      <div class="wkc">${series.map(s=>`<div class="wkr${s.today?" today":""}">
+        <i style="height:${Math.max(2,Math.round(s.g/mx*100))}%" title="${s.key} ${s.g}g"></i></div>`).join("")}</div>
+      <div class="dt" style="text-align:center;margin-top:4px">14 天共吃掉 ${total14} g</div>
+    </div>
+    <div class="fld"><label>剩余比例</label>
+      <div class="gbar" style="height:8px"><i style="width:${Math.min(100,Math.round(it.g/th*100))}%;background:${it.g<=th?"var(--warn)":"var(--accent)"}"></i></div>
+      <div class="dt" style="margin-top:5px">低量提醒线：${th} g</div>
+    </div>
+    <div class="btnrow" style="margin-bottom:10px"><button class="btn-s" style="flex:1" onclick="setLow('${id}')">改提醒线</button></div>
+    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">关闭</button><button class="btn-g" onclick="eatSheet('${id}')">吃掉</button></div>`);
+}
+
+function setLow(id){
+  const it=S.inv.find(x=>x.id===id);if(!it)return;
+  const cur=lowThreshold(it);
+  const opts=[50,100,200,300,500];
+  sheet(`<h3>低量提醒线</h3>
+    <div class="hint" style="margin-bottom:12px"><span>剩余低于这个量时提醒你补货（当前 ${cur} g）</span></div>
+    <div class="btnrow" style="flex-wrap:wrap;margin-bottom:14px">
+      ${opts.map(v=>`<button class="btn-s${v===cur?" on":""}" onclick="doSetLow('${id}',${v})">${v}g</button>`).join("")}
+    </div>
+    <button class="btn-o" onclick="closeSheet()">取消</button>`);
+}
+function doSetLow(id,v){
+  const it=S.inv.find(x=>x.id===id);if(!it)return;
+  it.low=v;save();closeSheet();renderStock();toast("提醒线已设为 "+v+"g");
+}
+
 function eatSheet(id){
   const it=S.inv.find(x=>x.id===id);if(!it)return;
   const quicks=[it.g*0.25,it.g*0.5,it.g*0.75,it.g].map(g=>Math.round(g)).filter((g,i,a)=>g>0&&a.indexOf(g)===i);
   sheet(`<h3>吃掉<span class="hl">${esc(it.n)}</span></h3>
     <div class="fld"><label>剩余 ${it.g} g，本次吃多少 (g)</label><input id="eatG" type="number" inputmode="decimal" value="${it.g>=100?100:it.g}"></div>
     <div class="btnrow" style="margin-bottom:12px">${quicks.map(g=>`<button class="btn-s" onclick="setEat(${g})">${g}g</button>`).join("")}</div>
-    <div class="chip neutral" id="eatPrev" style="margin-bottom:14px"></div>
-    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doEat('${id}')">确认吃掉</button></div>`);
+    <div class="chip neutral" id="eatPrev" style="margin-bottom:6px"></div>
+    <div class="eatleft" id="eatLeft"></div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doEat('${id}')">确认吃掉</button></div>`);
   const upd=()=>{
     const g=parseFloat($("eatG").value)||0,r=scale(it,g);
     $("eatPrev").textContent=`≈ ${Math.round(r.k)} kcal · 蛋白 ${r.p.toFixed(1)} · 脂肪 ${r.f.toFixed(1)} · 碳水 ${r.c.toFixed(1)} g`;
+    const left=Math.max(0,Math.round((it.g-g)*10)/10);
+    const th=lowThreshold(it);
+    $("eatLeft").innerHTML=(g>0&&g<=it.g)
+      ? (left<=0?`<span style="color:var(--warn)">吃完后库存清空</span>`
+        : left<=th?`<span style="color:var(--warn)">吃完后仅剩 ${left} g，将触发补货提醒</span>`
+        : `吃完后剩余 ${left} g`)
+      : "";
   };
   $("eatG").oninput=upd;upd();
   setTimeout(()=>$("eatG").select(),120);
@@ -783,18 +1235,28 @@ function doEat(id){
   if(g>it.g){toast("吃的比剩的多，请先补货");return}
   const r=scale(it,g),d=todayStr();
   S.log[d]=S.log[d]||[];
-  S.log[d].push({n:it.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,iid:it.id,b:{k:it.k,p:it.p,f:it.f,c:it.c,cat:it.cat}});
+  S.log[d].push({n:it.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,iid:it.id,b:{k:it.k,p:it.p,f:it.f,c:it.c,cat:it.cat,low:it.low}});
   it.g=Math.round((it.g-g)*10)/10;
-  if(it.g<=0)S.inv=S.inv.filter(x=>x.id!==id);
-  save();closeSheet();renderStock();toast("已记录，库存已扣减");
+  const emptied=it.g<=0;
+  if(emptied)S.inv=S.inv.filter(x=>x.id!==id);
+  save();closeSheet();renderStock();renderToday();
+  toast(emptied?`已记录 · ${it.n} 吃完了，记得补货`:"已记录，库存已扣减");
 }
 function restockSheet(id){
   const it=S.inv.find(x=>x.id===id);if(!it)return;
+  const b=dailyBurn(it.id);
   const quicks=[100,250,500,1000];
   sheet(`<h3>给<span class="hl">${esc(it.n)}</span>补货</h3>
-    <div class="fld"><label>当前剩余 ${it.g} g，补多少 (g)</label><input id="rsG" type="number" inputmode="decimal" value="500"></div>
-    <div class="btnrow" style="margin-bottom:14px">${quicks.map(g=>`<button class="btn-s" onclick="$('rsG').value=${g}">${g}g</button>`).join("")}</div>
-    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doRestock('${id}')">确认补货</button></div>`);
+    <div class="fld"><label>当前剩余 ${it.g} g，补多少 (g)</label><input id="rsG" type="number" inputmode="decimal" value="${b?Math.max(100,Math.ceil(b*7/100)*100):500}"></div>
+    <div class="btnrow" style="margin-bottom:10px">${quicks.map(g=>`<button class="btn-s" onclick="$('rsG').value=${g}">${g}g</button>`).join("")}</div>
+    ${b?`<div class="hint" style="margin-bottom:4px">${ic("clockFast",14)}<span>你日均吃 ${b.toFixed(0)}g，补 7 天量约需 ${Math.max(100,Math.ceil(b*7/100)*100)}g</span></div>`:""}
+    <div class="eatleft" id="rsLeft"></div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doRestock('${id}')">确认补货</button></div>`);
+  const upd=()=>{
+    const g=parseFloat($("rsG").value)||0;
+    $("rsLeft").innerHTML=g>0?`补货后共 ${Math.round((it.g+g)*10)/10} g${b?` · 约够吃 ${Math.floor((it.g+g)/b)} 天`:""}`:"";
+  };
+  $("rsG").oninput=upd;upd();
   setTimeout(()=>$("rsG").select(),120);
 }
 function doRestock(id){
@@ -804,11 +1266,44 @@ function doRestock(id){
 }
 function delInvAsk(id){
   const it=S.inv.find(x=>x.id===id);if(!it)return;
+  const used=(S.log[todayStr()]||[]).some(e=>e.iid===id);
   sheet(`<h3>删除库存？</h3>
-    <div class="hint" style="margin-bottom:14px"><span>将从库存移除「${esc(it.n)}」（剩余 ${it.g} g）。已记录的饮食不受影响。</span></div>
+    <div class="hint" style="margin-bottom:14px"><span>将从库存移除「${esc(it.n)}」（剩余 ${it.g} g）。已记录的饮食不受影响，历史数据保留。</span></div>
+    ${used?`<div class="hint" style="margin-bottom:14px;color:var(--warn)">${ic("info",14)}<span>今天已吃过这项，删除不会撤销今天的记录</span></div>`:""}
     <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-r" style="flex:1" onclick="doDelInv('${id}')">确认删除</button></div>`);
 }
 function doDelInv(id){S.inv=S.inv.filter(x=>x.id!==id);save();closeSheet();renderStock();toast("已删除")}
+
+/** 批量：一键清空库存（带二次确认 + 提示可导出） */
+function clearInvAsk(){
+  if(!S.inv.length){toast("库存已是空的");return}
+  sheet(`<h3>清空全部库存？</h3>
+    <div class="hint" style="margin-bottom:14px"><span>将移除全部 ${S.inv.length} 样食材。你的饮食记录不受影响。</span></div>
+    <div class="hint" style="margin-bottom:14px;color:var(--warn)">${ic("alert",14)}<span>建议先「导出备份」，清空后无法恢复</span></div>
+    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-r" style="flex:1" onclick="doClearInv()">确认清空</button></div>`);
+}
+function doClearInv(){S.inv=[];save();closeSheet();renderStock();toast("库存已清空")}
+
+/** 一键把采购清单里的低量项全部补货（按建议量） */
+function restockAllLow(){
+  const list=shoppingList();
+  if(!list.length){toast("没有需要补货的");return}
+  sheet(`<h3>一键补货</h3>
+    <div class="hint" style="margin-bottom:12px"><span>按建议量给以下 ${list.length} 样补货</span></div>
+    <div class="shoplist">${list.map(x=>`<div class="shoprow">
+      <div><div class="nm">${esc(x.n)}</div><div class="dt">现有 ${x.g} g</div></div>
+      <b>+${x.suggest} g</b></div>`).join("")}</div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doRestockAllLow()">确认补货</button></div>`);
+}
+function doRestockAllLow(){
+  const list=shoppingList();
+  list.forEach(x=>{
+    const it=S.inv.find(i=>i.id===x.id);
+    if(it)it.g=Math.round((it.g+x.suggest)*10)/10;
+  });
+  save();closeSheet();renderStock();toast(`已为 ${list.length} 样补货`);
+}
+
 
 /* ================= 搜索添加 ================= */
 let pickFood=null;
@@ -886,6 +1381,7 @@ async function doScan(){
     const j=JSON.parse(m[0]);
     $("rN").value=j.name||"";$("rK").value=j.energy??"";$("rP").value=j.protein??"";
     $("rF").value=j.fat??"";$("rC").value=j.carbs??"";
+    if($("rCat"))$("rCat").value=guessCat(j.name||"");   // 自动归类，用户可改
     $("scanResult").style.display="block";
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功，请核对数值</span>`;
     $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
@@ -909,13 +1405,15 @@ function shrink(src,max=1024){
   });
 }
 function readR(){
-  return {n:$("rN").value.trim(),k:parseFloat($("rK").value)||0,p:parseFloat($("rP").value)||0,
-    f:parseFloat($("rF").value)||0,c:parseFloat($("rC").value)||0,g:parseFloat($("rG").value)||0};
+  const nm=$("rN").value.trim();
+  return {n:nm,k:parseFloat($("rK").value)||0,p:parseFloat($("rP").value)||0,
+    f:parseFloat($("rF").value)||0,c:parseFloat($("rC").value)||0,g:parseFloat($("rG").value)||0,
+    cat:$("rCat")?$("rCat").value:guessCat(nm)};
 }
 function aiToStock(){
   const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
-  S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,cat:"other"});
-  save();toast("已加入库存");$("scanResult").style.display="none";
+  S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,cat:r.cat||guessCat(r.n)});
+  save();toast("已加入库存");$("scanResult").style.display="none";go("tab-stock");
 }
 function aiToLog(){
   const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
