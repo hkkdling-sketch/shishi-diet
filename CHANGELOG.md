@@ -242,3 +242,157 @@ DOM stub 测试**不能替代真实浏览器**。上面那个「首屏空白」�
 2. 条形码扫描（`BarcodeDetector` API，无需联网，Chrome/Edge 已支持）
 3. 「库存够吃几天」预测（已有 `invTotals()`，只差按日均消耗除一下）
 4. 周/月趋势图表（`weekChart()` 已实现，可以在「我的」页接入）
+
+---
+
+## 六、第二轮：把「库存管家」从列表变成系统
+
+第一轮只是让库存**能看**，第二轮把它做成**会算**。核心问题：
+一个纯记录型库存 App，用户记两天就懒得记了——因为它**不还嘴**。
+只有让它主动产出「你还够吃几天」「该买什么」「今天差多少蛋白」，
+用户才有理由每天回来。
+
+### 6.1 新增能力
+
+| 能力 | 实现 | 为什么重要 |
+|---|---|---|
+| **消耗速度预测** | `dailyBurn(id,days=7)` 取近 7 天该食材的日均消耗 | 「还剩 620g」是没用的，**「还能吃 6 天」才是有用的** |
+| **全库续航** | `dailyBurnAll()` + 概览卡圆环 | 一眼看到「整柜食材还能撑 8 天」 |
+| **自动采购清单** | `shoppingList()` 按实际消耗补足 7 天量 | 从「提醒你低了」升级到「告诉你要买多少」 |
+| **缺口分析** | `gapToday()` 对比目标与已摄入 | 回答「今天还差多少」 |
+| **蛋白补足建议** | `proteinSuggest()` 按蛋白密度排序库存 | 回答「还差 140g 蛋白，我该吃哪个」→ `吃 1400g 希腊酸奶 可补足蛋白` |
+| **每项自定义提醒线** | `it.low` + `lowThreshold()` | 鸡蛋剩 25g 该买、巴旦木剩 60g 不用买，一个阈值管不了 |
+| **14 天消耗柱图** | `detailSheet()` | 让用户看见自己的真实消耗曲线 |
+| **批量操作** | `restockAllLow()` / `clearInvAsk()` | 补货、清空都不用一个个点 |
+| **今日页库存提醒** | `renderToday()` 内嵌卡片 | **留存钩子**：不去库存页也能看到「该补货了」 |
+
+### 6.2 关键设计：样本不足时**不给预测**
+
+消耗预测最容易犯的错是「拿一天的数据就开始预测」。
+
+```js
+function dailyBurn(itemId, days=7){
+  let seen = 0, sum = 0;
+  for (let i=0;i<days;i++){
+    const d = dayBack(i);
+    const hit = (S.log[d]||[]).filter(e => e.iid === itemId);
+    if (hit.length) { seen++; sum += hit.reduce((a,e)=>a+e.g,0); }
+  }
+  if (seen < 2) return null;        // ← 少于 2 天有记录，返回 null 而不是硬算
+  return sum / days;
+}
+```
+
+`seen < 2` 就返回 `null`，界面显示「—」/「待记录」而不是一个假数字。
+理由：如果用户昨天只记录了一次「吃了 500g 鸡胸肉」，算出来日均 500g、
+预测「还剩 1 天」——这是纯噪声，会直接误导采购决策。
+**宁可显示「还不知道」，也不要显示一个错的。**
+
+### 6.3 分类推断兜底
+
+用户手动输入或 AI 识别出的食材，可能不在 87 条内置库里。
+没有分类就分不进组，库存页立刻乱掉。补一个三级推断：
+
+```js
+function guessCat(name){
+  const n = (name||"").toLowerCase().trim();
+  if (!n) return "other";
+  // ① 精确匹配内置库
+  const hit = FOODS.find(f => f.n.toLowerCase() === n);       if (hit) return hit.cat;
+  // ② 部分匹配（「鸡胸肉」含「鸡胸」）
+  const part = FOODS.find(f => f.n.toLowerCase().includes(n) || n.includes(f.n.toLowerCase()));
+  if (part) return part.cat;
+  // ③ 关键词正则
+  const KW = [[/肉|鸡|鸭|牛|猪|羊|鱼|虾|蟹|贝|蛋|奶|乳|豆腐|豆浆|肠|胸|腿|翅|protein/i,"protein"], ...];
+  for (const [re,c] of KW) if (re.test(n)) return c;
+  return "other";
+}
+```
+
+正则那条是**兜底里的兜底**。写完后测试发现 `巴旦木` 落进了 `other`——
+油脂类正则只写了 `油|坚果|花生|核桃|杏仁|腰果|芝麻`，漏了巴旦木、开心果、榛子、
+碧根果、夏威夷果、瓜子、南瓜子、松子。已补齐。
+**这就是写边界测试的价值：不测就不会发现漏词。**
+
+### 6.4 一个真实的测试发现
+
+边界测试场景 D 抛了 `Cannot read properties of undefined (reading '0')`。
+追下去发现 `delLog(i)` 里**硬编码了 `todayStr()`**：
+
+```js
+// 旧
+function delLog(i){
+  const d = todayStr();          // ← 只能删今天的
+  const e = S.log[d][i];         // ← 如果那天没记录，S.log[d] 是 undefined，崩
+```
+
+也就是说**删昨天的记录会直接崩溃**。修复是加可选日期参数并加空值保护：
+
+```js
+function delLog(i, day){
+  const d = day || todayStr();
+  const list = S.log[d] || [];
+  const e = list[i];
+  if (!e) { save(); if (d===todayStr()) renderToday(); return; }   // ← 越界安全返回
+  ...
+}
+```
+
+同时补了场景 E（删不存在的索引）和 F（跨日期删除要退回对应日期的库存量）。
+
+### 6.5 第二轮测试体系
+
+| 脚本 | 断言数 | 覆盖 |
+|---|---|---|
+| `edge-inv.js` | **35** | 消耗预测 / 采购清单 / 缺口分析 / 分类推断 / 详情与提醒线 / 吃掉补货撤销 / 视图渲染 |
+| `edge-undo.js` | **6** | 精确还原 / 吃光重建 / 多次记录删中间 / 无关联记录 / 越界 / 跨日期退款 |
+
+实测结果：
+
+```
+verify.py    → 结构校验通过：0 错误
+smoke.js     → 冒烟测试全部通过
+edge3.js     → 通过 6 / 失败 0
+edge-inv.js  → 通过 35 / 失败 0
+edge-undo.js → 通过 6 / 失败 0
+render.js    → 无控制台错误 / 无横向溢出
+```
+
+### 6.6 第三轮修正：首屏信息层级
+
+第二轮做完后截图发现一个**真问题**：库存页把「手动添加食物」表单放在最上面，
+用户每天进来第一眼看到的是一张填表框，要先滚过它才能看到概览。
+而本轮新增的**「今日还差」卡片被挤到了首屏以下**——最难做的功能藏得最深。
+
+修正：
+
+1. **手动添加改为折叠**（`<details>`），放在所有汇总卡之后。添加是低频操作，
+   看库存是高频操作，顺序反了。
+2. **压缩概览卡**：圆环 74→72px，内边距 16→15px，脚注行高 1.6→1.55。
+3. 「今日还差」卡片标题加右侧注解「库存可补」，让用户立刻明白这卡在干什么。
+
+实测首屏卡片位置变化：
+
+```
+修正前：库存总计 @104 … 今日还差 @735（被 nav @843 遮住大半）
+修正后：库存总计 @104 · 今日还差 @263 · 我的库存 @473    全部在首屏内
+```
+
+**踩到的坑**：把 `#addBox` 写成 `<details>` 后，测试断言「表单应默认折叠」失败——
+`#q` 输入框的 `offsetParent` 不为 null、`height` 仍有 44px。
+原因是 `.card` 没有 `overflow:hidden`，子元素溢出了折叠容器。
+补上后 `qVisible: false / height: 0 / offsetParent: null`，才算真正折叠。
+**`<details>` 不加 `overflow:hidden` 时，内部绝对/固定定位元素可能仍会显示。**
+
+修正后 `render.js` 新增了两条断言，防止以后再把关键卡片挤下去：
+- 概览卡必须在首屏内（否则 **error**）
+- 缺口分析卡必须在首屏内（否则 **warning**）
+- 手动添加表单必须默认折叠（否则 **error**）
+
+### 6.7 部署
+
+推送到 `hkkdling-sketch/shishi-diet`，GitHub Pages 已开启。
+本轮补了 `.nojekyll`——之前 Pages 报 `status=errored / Page build failed`，
+因为 `_build/` 下的 `.js`/`.py` 被 Jekyll 当成需要处理的文件。
+加 `.nojekyll` 后跳过 Jekyll 构建，静态文件直接原样发布。
+（此前虽然构建报错，但静态文件仍能 200 返回，所以用户侧无感知。）
