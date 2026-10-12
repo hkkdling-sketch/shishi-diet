@@ -75,7 +75,7 @@ const ICON_PATHS={
   search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   check:'<path d="M4.5 12.5l5 5 10-11"/>',
   bolt:'<path d="M13 3 5 13.5h6L11 21l8-10.5h-6z"/>',
-  flame:'<path d="M12 3s5 5 5 9.5a5 5 0 0 1-10 0C7 9 12 3 12 3z"/>',
+  flame:'<path d="M12 2c.4 3.4 5.9 5.6 5.9 11a5.9 5.9 0 0 1-11.8 0c0-2.6 1.6-4.2 2.6-5.7.2.9.7 1.6 1.3 2.1.4-2.8.2-5.3 2-7.4z"/>',
   alert:'<path d="M12 4 3 19h18z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>',
   info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
@@ -96,8 +96,13 @@ function load(){
   try{const old=localStorage.getItem("shishi_v1");
     if(old&&!localStorage.getItem(KEY)){const o=JSON.parse(old);o.api=o.api||{base:"",model:"",key:""};localStorage.setItem(KEY,JSON.stringify(o))}
   }catch(e){}
-  try{const s=localStorage.getItem(KEY);if(s)return JSON.parse(s)}catch(e){}
-  return {profile:null,inv:[],log:{},ex:{},api:{base:"https://open.bigmodel.cn/api/paas/v4",model:"glm-4v-flash",key:""},theme:""};
+  try{const s=localStorage.getItem(KEY);if(s){
+    const o=JSON.parse(s);
+    o.wt=o.wt||{};                       // 体重日志（按日期）
+    o.bestStreak=o.bestStreak||0;        // 历史最长连续记录天数
+    return o;
+  }}catch(e){}
+  return {profile:null,inv:[],log:{},ex:{},wt:{},bestStreak:0,api:{base:"https://open.bigmodel.cn/api/paas/v4",model:"glm-4v-flash",key:""},theme:""};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("存储空间不足")}}
 function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -246,8 +251,10 @@ function renderToday(){
        <div style="display:flex;align-items:center;gap:10px"><span class="tagk" style="color:var(--accent)">−${Math.round(e.kcal)} kcal</span><button class="btn-r" onclick="delEx(${i})">删</button></div></div>`).join("")
       +`</div>`;
   }
+  h+=`<div id="streakBox"></div>`;
   h+=weekChart(c);
   $("todayBox").innerHTML=h;
+  renderStreak();
 }
 function delLog(i,day){
   const d=day||todayStr();
@@ -875,6 +882,7 @@ function renderMe(){
     ?ex.map(e=>`<span class="pill">${esc(e.n)} ${e.min}min <b style="color:var(--accent)">−${Math.round(e.kcal)}kcal</b></span>`).join("")
     :`<div class="hint"><span>今天的训练会加成到每日热量目标上</span></div>`;
   const a=S.api;$("apiBase").value=a.base;$("apiModel").value=a.model;$("apiKey").value=a.key;
+  renderWeightTrend();
 }
 function saveProfile(){
   const p={sex:$("pSex").value,age:parseFloat($("pAge").value)||0,h:parseFloat($("pH").value)||0,
@@ -883,7 +891,138 @@ function saveProfile(){
   if(p.age<10||p.age>100){toast("年龄请填 10–100");return}
   if(p.h<100||p.h>250){toast("身高请填 100–250 cm");return}
   if(p.w<25||p.w>300){toast("体重请填 25–300 kg");return}
-  S.profile=p;save();renderMe();toast("已保存");
+  const prevW=S.profile?S.profile.w:null;
+  S.profile=p;save();
+  // 体重变化 → 自动记一笔体重日志（趋势图数据来源）
+  if(prevW===null||Math.abs(prevW-p.w)>=0.05) logWeight(p.w);
+  renderMe();toast("已保存");
+}
+
+/* ---------- 连续记录天数 ----------
+   只统计「有饮食记录」的天。今天还没记不算断（当天尚未结束），
+   从昨天往前连续数；昨天也没记则 streak=0。 */
+function streakDays(){
+  const has=d=>{const l=S.log[d];return !!(l&&l.length)};
+  const back=i=>{const t=new Date();t.setDate(t.getDate()-i);
+    return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")};
+  let n=0;
+  if(has(back(0))) n++;                 // 今天记了
+  for(let i=1;i<=400;i++){              // 往前连续数
+    if(has(back(i))) n++;
+    else break;
+  }
+  return n;
+}
+// 本月记录天数（用于「月度坚持」）
+function monthDays(){
+  const t=new Date(), pre=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0");
+  return Object.keys(S.log).filter(d=>d.startsWith(pre)&&S.log[d]&&S.log[d].length).length;
+}
+function renderStreak(){
+  const el=$("streakBox");if(!el)return;
+  if(!S.profile){el.innerHTML="";return}
+  const n=streakDays(), md=monthDays();
+  if(!n&&!md){el.innerHTML="";return}
+  const best=(S.bestStreak=Math.max(S.bestStreak||0,n));
+  const msg=n>=14?"稳定得不像话":n>=7?"已经成习惯了":n>=3?"保持住":"记录满 3 天开始有趋势";
+  el.innerHTML=`<div class="card streak">
+    <div class="sk-main">
+      <span class="sk-flame">${ic("flame",20)}</span>
+      <div>
+        <div class="sk-num">${n}<span>天</span></div>
+        <div class="sk-lab">连续记录 · ${msg}</div>
+      </div>
+    </div>
+    <div class="sk-side">
+      <div class="sk-cell"><b>${md}</b><span>本月天数</span></div>
+      <div class="sk-cell"><b>${best}</b><span>最长连续</span></div>
+    </div>
+  </div>`;
+}
+/* ---------- 体重趋势：单点噪声没有意义，看的是斜率 ---------- */
+function logWeight(w){
+  const d=todayStr();
+  S.wt=S.wt||{};
+  S.wt[d]=Math.round(w*10)/10;      // 同一天改多次只留最后一次
+  save();
+}
+// 体重趋势：返回近 n 条 [{d,w}]，按时间升序
+function weightSeries(n=30){
+  const keys=Object.keys(S.wt||{}).sort();
+  return keys.slice(-n).map(d=>({d,w:S.wt[d]}));
+}
+// 用最小二乘算斜率（kg/周），无足够数据返回 null
+function weightTrend(){
+  const s=weightSeries(30);
+  if(s.length<2)return null;
+  const pts=s.map((x,i)=>({x:i,y:x.w}));
+  const n=pts.length;
+  const mx=pts.reduce((a,p)=>a+p.x,0)/n, my=pts.reduce((a,p)=>a+p.y,0)/n;
+  let num=0,den=0;
+  pts.forEach(p=>{num+=(p.x-mx)*(p.y-my);den+=(p.x-mx)**2});
+  if(!den)return null;
+  const perDay=num/den;
+  const first=s[0].w, last=s[s.length-1].w;
+  return {
+    kgPerWeek:Math.round(perDay*7*100)/100,
+    delta:Math.round((last-first)*100)/100,
+    first,last,points:n,span:s[0].d+" ~ "+s[s.length-1].d,
+  };
+}
+function renderWeightTrend(){
+  const el=$("wtTrend");if(!el)return;
+  const s=weightSeries(30), t=weightTrend();
+  if(s.length===0){
+    el.innerHTML=`<div class="hint"><span>保存身体数据后，这里会记录体重变化趋势</span></div>`;
+    return;
+  }
+  // 折线图：宽 300 高 64 的视口，用 polyline 画
+  const W=300,H=64,PAD=6;
+  const ws=s.map(x=>x.w), mn=Math.min(...ws), mx=Math.max(...ws), rng=(mx-mn)||1;
+  const pts=s.map((x,i)=>{
+    const px=s.length===1?W/2:i/(s.length-1)*W;
+    const py=H-PAD-((x.w-mn)/rng)*(H-PAD*2);
+    return [Math.round(px*10)/10,Math.round(py*10)/10];
+  });
+  const line=pts.map(p=>p.join(",")).join(" ");
+  const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?3.2:1.8}" fill="var(--accent)"${i===pts.length-1?' stroke="var(--surface)" stroke-width="1.5"':""}/>`).join("");
+  const last=s[s.length-1];
+  let chg="";
+  if(t&&Math.abs(t.delta)>=0.1){
+    const up=t.delta>0;
+    chg=`<span class="wt-chg" style="color:${up?"var(--danger)":"var(--accent)"}">${up?"+":""}${t.delta} kg / ${t.points}次记录</span>`;
+  }
+  el.innerHTML=`
+    <div class="wt-head">
+      <div><span class="wt-cur">${last.w}</span><span class="wt-unit">kg</span></div>
+      <div class="wt-side">
+        ${chg}
+        ${t?`<span class="wt-pace">约 ${t.kgPerWeek>0?"+":""}${t.kgPerWeek} kg/周</span>`:""}
+      </div>
+    </div>
+    <svg class="wt-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+      ${dots}
+    </svg>
+    <div class="wt-foot"><span>${s.length} 次记录 · ${t?t.span:""}</span>
+      <button class="btn-s" style="padding:5px 9px;font-size:11.5px" onclick="logWeightSheet()">记录体重</button></div>`;
+}
+function logWeightSheet(){
+  const cur=S.profile?S.profile.w:60;
+  sheet(`<h3>记录今日体重</h3>
+    <div class="fld"><label>体重 (kg)</label>
+      <input id="wtIn" type="number" inputmode="decimal" step="0.1" value="${cur}" autofocus></div>
+    <div class="hint" style="margin:-6px 0 12px"><span>同一天改多次只保留最后一次；趋势看斜率，不看单日波动</span></div>
+    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button>
+      <button class="btn-g" style="flex:1" onclick="doLogWeight()">保存</button></div>`);
+}
+function doLogWeight(){
+  const v=parseFloat($("wtIn").value);
+  if(!v||v<25||v>300){toast("体重请填 25–300 kg");return}
+  const d=todayStr();S.wt=S.wt||{};S.wt[d]=Math.round(v*10)/10;
+  if(S.profile){S.profile.w=Math.round(v*10)/10;$("pW").value=v}
+  save();closeSheet();renderMe();renderToday();toast("已记录 "+v+" kg");
 }
 function addEx(){
   if(!S.profile){toast("先填身体数据");return}
