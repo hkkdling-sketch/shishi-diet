@@ -549,6 +549,30 @@ a{color:var(--accent)}
 
 /* ---------- 5 个导航项时字号收紧 ---------- */
 nav button{font-size:10px;padding:8px 0 7px}
+
+/* ---------- 「装到桌面」卡：要比普通卡醒目一点，但不喧宾夺主 ---------- */
+.instcard{border-color:var(--accent);background:var(--accent-soft)}
+.instcard h3{color:var(--accent)}
+.instcard h3 svg{color:var(--accent)}
+.instcard .hint{color:var(--ink)}
+.instcard .btn-g{margin-top:12px}
+
+/* 今日页那条：细横幅，一行高，绝不能把「今日还差」挤出首屏 */
+.instbar{
+  display:flex;align-items:center;gap:9px;
+  background:var(--accent-soft);border:1px solid var(--accent);
+  border-radius:var(--r-md);padding:7px 10px;margin-bottom:12px;
+  font-size:12.5px;color:var(--ink);line-height:1.35;
+}
+.instbar svg{color:var(--accent);flex-shrink:0}
+.instbar .tx{flex:1;min-width:0}
+.instbar .btn-s{padding:5px 11px;font-size:12px;flex-shrink:0;
+  background:var(--accent);color:#fff;border-color:var(--accent)}
+.instbar .instx{
+  flex-shrink:0;width:26px;height:26px;padding:0;border-radius:50%;
+  background:transparent;color:var(--ink-3);font-size:13px;font-weight:400;
+}
+.instbar .instx:active{background:var(--line)}
 </style>
 <body>
 <header>
@@ -561,6 +585,7 @@ nav button{font-size:10px;padding:8px 0 7px}
 <main>
 <!-- ============ 今日 ============ -->
 <div class="tab" id="tab-today">
+  <div id="instBox"></div>
   <div id="todayBox"></div>
 </div>
 
@@ -670,6 +695,7 @@ nav button{font-size:10px;padding:8px 0 7px}
 
 <!-- ============ 我的 ============ -->
 <div class="tab" id="tab-me">
+  <div id="instBoxMe"></div>
   <div class="card">
     <h3><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>我的身体数据</h3>
     <div class="grid2">
@@ -902,7 +928,8 @@ const ICON_PATHS={
   clockFast:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>',
   chart:'<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3.5-4 3 2.4L19 8"/><circle cx="19" cy="8" r="1.4" fill="currentColor"/>',
   chevL:'<path d="M15 5l-7 7 7 7"/>',
-  chevR:'<path d="M9 5l7 7-7 7"/>'
+  chevR:'<path d="M9 5l7 7-7 7"/>',
+  close:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>'
 };
 function ic(name,size=24,extra=''){
   return `<svg class="ic-svg" ${extra} width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]||''}</svg>`;
@@ -923,10 +950,12 @@ function load(){
     o.plan=o.plan||{};                   // 训练日程 { "YYYY-MM-DD": {type,name,min,km,intensity,rest:bool} }
     o.myEx=o.myEx||[];                   // 用户自定义运动项目
     o.restKcal=o.restKcal||0;            // 休息日目标调整（kcal，可为负）
+    if(typeof o.hideInstall!=="boolean")o.hideInstall=false;   // 是否关掉了首页的「装到桌面」提示
     return o;
   }}catch(e){}
   return {profile:null,inv:[],log:{},ex:{},wt:{},plan:{},myEx:[],restKcal:0,
-          bestStreak:0,api:{base:"https://open.bigmodel.cn/api/paas/v4",model:"glm-4v-flash",key:""},theme:""};
+          bestStreak:0,hideInstall:false,
+          api:{base:"https://open.bigmodel.cn/api/paas/v4",model:"glm-4v-flash",key:""},theme:""};
 }
 function save(){try{norm();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("存储空间不足")}}
 /** 把关键容器字段兜底成正确类型。外部改坏数据 / 导入残缺备份时不让页面崩。 */
@@ -973,6 +1002,100 @@ function applyTheme(){
   const b=$("themeBtn");if(b)b.innerHTML=ic(t==="dark"?"sun":"moon",20);
 }
 function toggleTheme(){S.theme=(S.theme==="dark"||(!S.theme&&matchMedia("(prefers-color-scheme:dark)").matches))?"light":"dark";save();applyTheme()}
+
+/* ================= 装到桌面（PWA 安装） =================
+
+   为什么要有这块：用户第一次在手机浏览器里打开时，不知道要去浏览器菜单里
+   找「添加到主屏幕」——这个入口在不同浏览器里叫法、位置都不一样，
+   安卓 Chrome 叫「安装应用」、UC/QQ 浏览器叫「添加到桌面」、
+   iOS Safari 只能通过分享菜单。所以这里主动把入口摆到应用里：
+
+     · 安卓 Chrome / Edge：捕获 beforeinstallprompt，一键弹系统原生安装框
+     · iOS Safari：没有 beforeinstallprompt，只能给图文步骤
+     · 其它浏览器：给「去菜单里找」的提示
+
+   已经在桌面版运行（standalone）时整块隐藏，不再打扰。
+*/
+let deferredPrompt=null;
+
+/** 是否已经作为独立 App 运行（不是浏览器标签页） */
+function isStandalone(){
+  try{
+    if(window.navigator.standalone===true)return true;               // iOS Safari
+    if(matchMedia&&matchMedia("(display-mode: standalone)").matches)return true;
+    if(matchMedia&&matchMedia("(display-mode: minimal-ui)").matches)return true;
+  }catch(e){}
+  return false;
+}
+function isIOS(){
+  const ua=navigator.userAgent||"";
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+}
+/** 当前环境能不能一键安装（只有捕获到 beforeinstallprompt 才算） */
+function canOneTapInstall(){ return !!deferredPrompt }
+
+/** 各平台「怎么装」的步骤文案 */
+function installStepsHtml(){
+  const ios=isIOS();
+  if(canOneTapInstall())
+    return `<div class="hint"><span>装到桌面后，点图标就能直接打开，不用每次输网址；<b>断网也能记录</b>。</span></div>
+      <button class="btn-g" style="margin-top:12px" onclick="doInstall()">${ic("box",17)}一键添加到桌面</button>`;
+  if(ios)
+    return `<div class="hint"><span>iPhone 要用 <b>Safari</b> 打开本页，然后：点底部中间的 <b>分享按钮</b>（方框带向上箭头）→ 往下滑 → 选 <b>「添加到主屏幕」</b> → 右上角「添加」。</span></div>
+      <div class="hint" style="margin-top:8px"><span style="color:var(--warn)">微信 / QQ 内置浏览器打开的不行，要先在右上角选「用 Safari 打开」。</span></div>`;
+  return `<div class="hint"><span>点浏览器右上角的菜单（<b>⋮</b> 或 <b>≡</b>），选 <b>「添加到主屏幕」</b> 或 <b>「安装应用」</b>。</span></div>
+    <div class="hint" style="margin-top:8px"><span>找不到的话，换 <b>Chrome</b> 或 <b>Edge</b> 打开本页，菜单里一定有这一项。</span></div>`;
+}
+
+/** 「怎么装」抽屉：没法一键装时，把步骤摆出来，而不是让人去翻浏览器菜单 */
+function showInstallHelp(){
+  sheet(`<h3>${ic("box",18)}装到手机桌面</h3>${installStepsHtml()}
+    <button class="btn-o" style="margin-top:16px" onclick="closeSheet()">知道了</button>`);
+}
+
+function renderInstall(){
+  const home=$("instBox"), me=$("instBoxMe");
+  if(!home&&!me)return;
+  // 已作为独立 App 运行 → 整块消失，不再打扰
+  if(isStandalone()){
+    if(home)home.innerHTML="";
+    if(me)me.innerHTML="";
+    return;
+  }
+  const oneTap=canOneTapInstall();
+  // 今日页：只放一条细横幅，不能把「今日还差」挤出首屏
+  if(home)home.innerHTML = S.hideInstall ? "" :
+    `<div class="instbar">
+      ${ic("box",15)}
+      <span class="tx">装到桌面，断网也能记</span>
+      <button class="btn-s" onclick="${oneTap?"doInstall()":"showInstallHelp()"}">${oneTap?"去安装":"怎么装"}</button>
+      <button class="instx" onclick="hideInstall()" aria-label="不再提示">${ic("close",14)}</button>
+    </div>`;
+  // 我的页：完整说明，随时想装都能找到
+  if(me)me.innerHTML=`<div class="card instcard">
+    <h3>${ic("box",18)}装到手机桌面<span class="count">推荐</span></h3>
+    ${installStepsHtml()}
+  </div>`;
+}
+
+/** 触发系统原生安装框 */
+function doInstall(){
+  if(!deferredPrompt){ renderInstall(); return }
+  const p=deferredPrompt;
+  deferredPrompt=null;                    // 一个 prompt 只能用一次
+  p.prompt();
+  if(p.userChoice&&p.userChoice.then){
+    p.userChoice.then(r=>{
+      if(r&&r.outcome==="accepted")toast("已添加到桌面");
+      renderInstall();
+    }).catch(()=>renderInstall());
+  }else renderInstall();
+}
+/** 「以后再说」：只关掉今日页那张，我的页仍然保留入口 */
+function hideInstall(){
+  S.hideInstall=true;save();renderInstall();
+  toast("已隐藏，需要时去「我的」页");
+}
 
 /* ================= 计算（含边界约束） =================
 
@@ -2741,6 +2864,20 @@ function doReset(){localStorage.removeItem(KEY);location.reload()}
   });
   applyTheme();
   go("tab-today");   // 激活默认页（.tab 默认 display:none，必须走 go 才会显示）
+
+  // 装到桌面：先按当前环境渲染一次，等浏览器抛出 beforeinstallprompt 再升级成「一键安装」
+  renderInstall();
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();          // 拦下浏览器自带的迷你提示条，改由应用内按钮触发
+    deferredPrompt=e;
+    renderInstall();
+  });
+  window.addEventListener("appinstalled",()=>{
+    deferredPrompt=null;
+    renderInstall();
+    toast("已添加到桌面");
+  });
+
   if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
   }
