@@ -5,6 +5,8 @@
 
 **🌐 在线体验：<https://hkkdling-sketch.github.io/shishi-diet/>**（手机打开后「添加到主屏幕」即可当 App 用）
 
+**📱 第一次用请先看：[手机上怎么用](https://hkkdling-sketch.github.io/shishi-diet/guide/)** —— 从装到桌面到每天怎么记，3 分钟看完。
+
 > 改造过程、设计决策与踩坑记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 一个把**冰箱/储物柜库存**当作记账单位的饮食管理工具。区别于市面上所有「搜食物 → 记一笔」的卡路里 App：你先把买回来的食材按克重入库，之后每次吃就从库存里扣减。想撤销记录时，克重会原样退回库存——这让「我这个月到底买了多少肉、还剩多少」变成可查的数据，而不是一笔糊涂账。
@@ -164,6 +166,8 @@ Key 只存本机 `localStorage`，不会上传到任何地方。
 ├── sw.js           # Service Worker
 ├── icon-192.png
 ├── icon-512.png
+├── report/         # 改造报告页（GitHub Pages 托管）
+├── guide/          # 手机上手指南页
 └── _build/         # 构建与测试脚本（非运行时依赖，可删）
     ├── new.css / new_body.html / new_app.js   # 分段源文件
     ├── assemble.py                            # 三文件拼回 index.html
@@ -209,6 +213,9 @@ node _build/edge-train.js
 
 # 真实浏览器：双主题截图、控制台错误、对比度、首屏可见性（需 playwright）
 node _build/render.js
+
+# 上手指南页：双主题、锚点有效性、横向溢出、FAQ 完整性
+node _build/render-guide.js
 ```
 
 全部通过才算改动合格。当前合计 **180 条断言**。覆盖的关键断言：
