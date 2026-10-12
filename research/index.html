@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<title>识食 · 行业调研报告</title>
+<style>
+:root{
+  --canvas:#faf8f5; --surface:#fff; --surface-2:#f0ede7;
+  --ink:#2b2a27; --ink-2:#6b675f; --ink-3:#9a948a;
+  --line:#e6e2da;
+  --accent:#3B7A57; --accent-soft:#eaf1ec;
+  --danger:#c0392b; --warn:#b8860b;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --canvas:#141412; --surface:#1c1b19; --surface-2:#26241f;
+    --ink:#eae7e0; --ink-2:#a8a29a; --ink-3:#7a746b;
+    --line:#2e2c28;
+    --accent:#7fb894; --accent-soft:#1f2b23;
+    --danger:#e07a6a; --warn:#d4a33c;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--canvas);color:var(--ink);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;padding:0 0 80px;
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);background:var(--surface);padding:40px 0 32px;margin-bottom:36px}
+h1{font-size:28px;font-weight:650;letter-spacing:-.02em;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1 .badge{font-size:11.5px;font-weight:600;letter-spacing:.04em;background:var(--accent-soft);color:var(--accent);padding:4px 10px;border-radius:6px}
+header p{color:var(--ink-2);margin-top:12px;font-size:15px;max-width:660px}
+header .links{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+header .links a{color:var(--accent);text-decoration:none;font-size:13.5px;font-weight:500;border:1px solid var(--line);padding:9px 16px;border-radius:8px;background:var(--surface)}
+header .links a:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+h2{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  margin:48px 0 18px;display:flex;align-items:center;gap:12px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:17px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+h4{font-size:14.5px;font-weight:600;margin:18px 0 8px}
+p{margin:0 0 12px;color:var(--ink-2)}
+p strong{color:var(--ink);font-weight:600}
+code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.86em;
+  background:var(--surface-2);padding:2px 6px;border-radius:4px;color:var(--ink);word-break:break-all}
+a{color:var(--accent)}
+
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:14px;color:var(--ink);line-height:1.65}
+.note b{color:var(--accent)}
+.note .ti{font-weight:600;display:block;margin-bottom:4px}
+.alert{border-left:3px solid var(--danger);background:#f8ecea;padding:14px 18px;
+  border-radius:0 10px 10px 0;margin:18px 0;font-size:14px;color:var(--ink);line-height:1.65}
+.alert .ti{font-weight:600;display:block;margin-bottom:4px;color:var(--danger)}
+@media(prefers-color-scheme:dark){.alert{background:#2b1f1c}}
+
+.tbl{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin:6px 0 14px}
+.tr{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px;align-items:flex-start}
+.tr:last-child{border-bottom:none}
+.tr .k{flex:0 0 128px;font-weight:600;font-size:13.5px}
+.tr .v{flex:1;color:var(--ink-2);font-size:13.5px}
+.tr .v b{color:var(--ink)}
+.tr.head{background:var(--surface-2)}
+.tr.head .k,.tr.head .v{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+
+ul.plain{list-style:none;margin:0 0 14px}
+ul.plain li{padding:5px 0 5px 20px;position:relative;color:var(--ink-2);font-size:14px;line-height:1.65}
+ul.plain li::before{content:"·";position:absolute;left:6px;color:var(--accent);font-weight:700}
+ul.plain li b{color:var(--ink)}
+ul.plain li code{font-size:.84em}
+
+.rule{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px;margin:14px 0}
+.rule .rn{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.rule .rt{font-weight:600;font-size:15px;margin-bottom:6px}
+.rule .rd{font-size:13.5px;color:var(--ink-2);line-height:1.65}
+.rule .rd b{color:var(--ink)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.card2{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px}
+.card2 .hd{font-size:13.5px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card2 .hd i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.card2.bad .hd i{background:var(--danger)}
+.card2.good .hd i{background:var(--accent)}
+.card2 ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.card2 li{padding:4px 0 4px 18px;position:relative;line-height:1.6}
+.card2.bad li::before{content:"✕";position:absolute;left:0;color:var(--danger);font-size:11px;font-weight:700}
+.card2.good li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-size:11px;font-weight:700}
+
+.bar{display:flex;align-items:center;gap:10px;margin:6px 0}
+.bar .lab{flex:0 0 108px;font-size:13px;color:var(--ink-2)}
+.bar .track{flex:1;height:9px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.bar .fill{height:100%;border-radius:5px;background:var(--accent)}
+.bar .fill.warn{background:var(--warn)}
+.bar .val{flex:0 0 62px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.prio{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin:14px 0}
+.pr{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);align-items:flex-start}
+.pr:last-child{border-bottom:none}
+.pv{flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.05em;padding:3px 8px;
+  border-radius:5px;margin-top:2px;min-width:34px;text-align:center}
+.pv.p0{background:#f8ecea;color:var(--danger)}
+.pv.p1{background:#fbf3e2;color:var(--warn)}
+.pv.p2{background:var(--accent-soft);color:var(--accent)}
+@media(prefers-color-scheme:dark){.pv.p0{background:#2b1f1c}.pv.p1{background:#2b2718}}
+.pr .body{flex:1}
+.pr .t{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.pr .d{font-size:13.5px;color:var(--ink-2);margin:0;line-height:1.6}
+.pr .d b{color:var(--ink)}
+
+.src{font-size:12px;color:var(--ink-3);margin:-6px 0 14px}
+.src a{color:var(--ink-3);text-decoration:none;border-bottom:1px dotted var(--ink-3)}
+.src a:hover{color:var(--accent);border-color:var(--accent)}
+
+blockquote{border-left:3px solid var(--line);padding:2px 0 2px 16px;margin:14px 0;
+  color:var(--ink-2);font-size:14px;font-style:italic}
+blockquote b{color:var(--ink);font-style:normal}
+
+footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;padding-top:26px;border-top:1px solid var(--line)}
+@media(max-width:640px){
+  h1{font-size:22px}.two{grid-template-columns:1fr}.wrap{padding:0 18px}
+  .tr{flex-direction:column;gap:4px}.tr .k{flex:none}
+  .bar .lab{flex:0 0 84px}.bar .val{flex:0 0 54px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>识食 · 行业调研报告 <span class="badge">规范与对标</span></h1>
+    <p>把「饮食记录」这件事做到行业水准，需要满足哪些规范、别人做对了什么、我们现在差在哪。</p>
+    <p style="margin-top:14px"><strong>一句话结论：最大的问题不是审美，是数据模型不完整。</strong></p>
+    <div class="links">
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/" target="_blank">🌐 打开识食</a>
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/guide/" target="_blank">📱 上手指南</a>
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/report/" target="_blank">改造报告</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="alert">
+    <span class="ti">先认错：我漏了一个国标</span>
+    <b>GB 28050《预包装食品营养标签通则》强制标示 7 项</b>：能量、蛋白质、脂肪、
+    <b>饱和脂肪</b>、碳水化合物、<b>糖</b>、<b>钠</b>。<br><br>
+    而识食只追踪 5 项：热量、蛋白质、脂肪、碳水、膳食纤维。
+    <b>缺的 3 项（饱和脂肪、糖、钠）全部是国标强制项</b>——其中钠从 2011 版就是强制的，
+    我做了七轮都没发现。
+  </div>
+
+  <h2>一、营养数据字段：这是硬规范，不是可选项</h2>
+
+  <p>我原以为「热量 + 三大宏量 + 纤维」是行业标准配置。查完国标才发现，
+    这只是一部分。<strong>中国营养标签的强制字段是 7 项</strong>：</p>
+
+  <div class="tbl">
+    <div class="tr head"><div class="k">字段</div><div class="v">状态</div></div>
+    <div class="tr"><div class="k">能量</div><div class="v">国标强制 · 识食<b>已追踪</b></div></div>
+    <div class="tr"><div class="k">蛋白质</div><div class="v">国标强制 · 识食<b>已追踪</b></div></div>
+    <div class="tr"><div class="k">脂肪</div><div class="v">国标强制 · 识食<b>已追踪</b></div></div>
+    <div class="tr"><div class="k">碳水化合物</div><div class="v">国标强制 · 识食<b>已追踪</b></div></div>
+    <div class="tr"><div class="k">钠</div><div class="v">国标强制（2011 版起）· <b style="color:var(--danger)">识食缺失</b></div></div>
+    <div class="tr"><div class="k">饱和脂肪</div><div class="v">国标强制（2025 版新增）· <b style="color:var(--danger)">识食缺失</b></div></div>
+    <div class="tr"><div class="k">糖</div><div class="v">国标强制（2025 版新增）· <b style="color:var(--danger)">识食缺失</b></div></div>
+    <div class="tr"><div class="k">膳食纤维</div><div class="v">国标<b>可选</b> · 识食已追踪（做得比国标多）</div></div>
+  </div>
+
+  <p class="src">来源：<a href="https://www.cfsa.net.cn/wap/spaqbz/cjwtjd/spaqgjbzcjwtjd/jbyqxgwt/dlbsxgwt_2_2/2025/15772.shtml" target="_blank">国家食品安全风险评估中心 · 关于强制标示的能量和营养成分（2025-10-30）</a></p>
+
+  <h4>为什么这三项不能省</h4>
+  <ul class="plain">
+    <li><b>钠</b> —— 中国居民钠摄入长期远超推荐量，是高血压的第一风险因素。
+      它<b>从 2011 版起就是强制项</b>，不是新增的。一个面向中文用户的饮食 App 不追踪钠，说不过去。</li>
+    <li><b>糖</b> —— 2025 版新增为强制项。游离糖与肥胖、龋齿、代谢综合征直接相关。</li>
+    <li><b>饱和脂肪</b> —— 2025 版新增为强制项。与心血管疾病风险相关，且它是 Nutri-Score 的负分项之一。</li>
+  </ul>
+
+  <h4>行业默认追踪字段数</h4>
+  <div class="bar"><div class="lab">Cronometer</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="val">84 项</div></div>
+  <div class="bar"><div class="lab">MyFitnessPal</div><div class="track"><div class="fill" style="width:17%"></div></div><div class="val">14 项</div></div>
+  <div class="bar"><div class="lab">识食</div><div class="track"><div class="fill warn" style="width:6%"></div></div><div class="val">5 项</div></div>
+
+  <p style="margin-top:14px">行业共识的<strong>核心 9 项</strong>是：能量、蛋白质、脂肪、碳水化合物、膳食纤维、
+    <strong>糖、饱和脂肪、钠、胆固醇</strong>。识食有其中 5 项。</p>
+
+  <div class="note">
+    <span class="ti">还有一个我没想到的角度：数据来源可追溯</span>
+    Cronometer 的一个关键设计是<b>每个数值都标注来源</b>（USDA / NCCDB / 厂商标签）。
+    因为营养数据本身就存在实验室误差和批次差异，<b>标出来源等于承认不确定性</b>，
+    比给一个假装精确的数字更专业。识食目前所有食物数据都是一句「参考中国食物成分表」，没有区分来源。
+  </div>
+
+  <h2>二、设计规范：我们踩中的坑</h2>
+
+  <div class="rule">
+    <div class="rn">最严重</div>
+    <div class="rt">用环形图当主要视觉编码</div>
+    <div class="rd">
+      Nielsen Norman Group 的结论：<b>位置和长度是最准确的视觉编码，颜色和面积最差</b>。
+      饼图/环形图依赖角度 + 面积判断，<b>甜甜圈还把中间挖空，比饼图更难读</b>。<br><br>
+      更关键的是 Apple HIG 有明文规定：<b>Activity 圆环是保留给「移动 / 锻炼 / 站立」三环的</b>，
+      不得挪作他用、不得改色、不得做成装饰或品牌元素。
+      我们在首页用了一个大圆环表示热量摄入 —— 既是最难读的编码，又撞了 Apple 的保留元素。<br><br>
+      <b>改法：主指标用「条形 + 数字」。</b>条形是长度编码（最准），数字给精确值。
+      环形图如果保留，只能作辅助，且必须带数字标签。
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rn">高</div>
+    <div class="rt">色觉障碍：不能只靠颜色区分</div>
+    <div class="rd">
+      约 <b>4.5% 的人有色觉障碍</b>（男性约 8%）。红/绿是最危险的组合 —— 而这恰好是
+      健康类 App 最爱用的（红=超标、绿=达标）。<br>
+      <b>改法：颜色之外必须有第二种编码</b> —— 文字标签（「超 12g」）、图标、图案填充。
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rn">中</div>
+    <div class="rt">触控目标尺寸</div>
+    <div class="rd">
+      WCAG 2.2 <b>SC 2.5.8 要求 ≥24×24 CSS px</b>（或与相邻目标中心距 ≥24px）；
+      Apple 建议 <b>44×44pt</b>；Google Material 建议 <b>48×48dp</b>。<br>
+      识食目前有些小按钮（关闭 ×、序号徽标）低于这个标准，需要在真机上逐个量。
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rn">中</div>
+    <div class="rt">非文本元素的对比度</div>
+    <div class="rd">
+      WCAG 要求：正文 <b>≥4.5:1</b>，<b>图标 / 进度条 / 边框等非文本元素 ≥3:1</b>。
+      我们一直在测正文对比度（浅色 5.4:1 / 深色 9.5:1，达标），
+      但<b>从没测过进度环、日历格子、分隔线这些非文本元素的对比度</b>。
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card2 good">
+      <div class="hd"><i></i>已经做对的</div>
+      <ul>
+        <li>5 个底部 tab —— M3 Navigation Bar 支持 3–5 个，合规</li>
+        <li><code>tabular-nums</code> —— 数字不跳动，行业标准做法</li>
+        <li>内联 SVG 图标，不用 emoji（跨平台渲染一致）</li>
+        <li>跟随系统深色模式</li>
+        <li>无账号、纯本地 —— 隐私向产品的正确选择</li>
+      </ul>
+    </div>
+    <div class="card2 bad">
+      <div class="hd"><i></i>需要改的</div>
+      <ul>
+        <li>环形图当主编码 → 改条形 + 数字</li>
+        <li>营养字段缺 3 项国标强制项</li>
+        <li>非文本对比度从未测过</li>
+        <li>部分小按钮低于 44pt 触控标准</li>
+        <li>「超 X」是负面提醒，研究显示会促使用户放弃</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="src">来源：
+    <a href="https://www.nngroup.com/articles/dashboards-preattentive/" target="_blank">NN/g · Dashboard 的前注意属性</a> ·
+    <a href="https://developer.apple.com/design/human-interface-guidelines/healthkit" target="_blank">Apple HIG · HealthKit</a> ·
+    <a href="https://m3.material.io/components/navigation-bar/guidelines" target="_blank">Material 3 · Navigation Bar</a> ·
+    <a href="https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html" target="_blank">WCAG 2.2 SC 2.5.8</a>
+  </p>
+
+  <h2>三、优秀案例：别人做对了什么</h2>
+
+  <div class="tbl">
+    <div class="tr head"><div class="k">项目</div><div class="v">值得学的点</div></div>
+    <div class="tr">
+      <div class="k">FoodYou<br><span style="font-weight:400;color:var(--ink-3);font-size:12px">616★ · Kotlin</span></div>
+      <div class="v">
+        <b>① 模块化首页</b> —— 用户自己选首页放哪些卡片，不同人关心的指标不同。<br>
+        <b>② 接三个食物库</b> —— Open Food Facts / USDA FoodData Central / 瑞士成分库，让用户选。<br>
+        <b>③ 完整营养追踪</b> —— 不只宏量，还有维生素矿物质。<br>
+        <b>④ 食谱组合</b> —— 多种食材组合成一道菜，营养自动累加。
+      </div>
+    </div>
+    <div class="tr">
+      <div class="k">MacroFactor<br><span style="font-weight:400;color:var(--ink-3);font-size:12px">商业产品</span></div>
+      <div class="v">
+        <b>自适应 TDEE</b> —— 不用公式估算消耗，而是从「实际吃了多少 + 体重怎么变」反推。
+        这是它最核心的卖点，详见下一节。
+      </div>
+    </div>
+    <div class="tr">
+      <div class="k">Open Food Facts<br><span style="font-weight:400;color:var(--ink-3);font-size:12px">1429★ · Flutter</span></div>
+      <div class="v">
+        <b>营养成分表 OCR 流水线</b>：表格检测（SSD）→ 文字区域检测（CTPN）→ OCR（Tesseract）
+        → <b>后处理（正则清洗 + SymSpell 拼写纠正）</b>。<br>
+        对我们的拍照识别有直接启发：<b>识别结果必须做拼写纠正和数值合理性校验</b>，
+        不能直接把模型输出当结果。目前识食是「模型给什么就用什么」。
+      </div>
+    </div>
+    <div class="tr">
+      <div class="k">Cronometer<br><span style="font-weight:400;color:var(--ink-3);font-size:12px">商业产品</span></div>
+      <div class="v">
+        <b>84 项营养素 + 数据来源标注</b> —— 每个数值都能查到出处，等于公开承认数据的不确定性。
+      </div>
+    </div>
+    <div class="tr">
+      <div class="k">Mealie<br><span style="font-weight:400;color:var(--ink-3);font-size:12px">13517★ · Python</span></div>
+      <div class="v">
+        食谱管理 + 采购清单联动。星数说明「食材/采购」这条线本身有巨大需求。
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="ti">一个有意思的行业现象</span>
+    调研里发现大量新产品是 <b>Telegram / WhatsApp 机器人</b>（meals.chat、NOMS、Olivka、Rex）。
+    原因很直接：<b>用户最不想做的是「打开一个 App 然后填表」</b>。
+    把记录入口放在已经打开的聊天窗口里，摩擦最小。
+    这对「怎么降低每日录入摩擦」是个强信号。
+  </div>
+
+  <h2>四、算法：最该抄的一个</h2>
+
+  <h3>自适应 TDEE（Adaptive TDEE）</h3>
+
+  <p>我们现在的做法是用 <strong>Mifflin-St Jeor 公式 × 活动系数</strong>估算消耗。
+    这是人群回归公式，个体差异（NEAT、代谢适应）可达 ±10–15%。</p>
+
+  <p>MacroFactor 的做法完全不同 —— <strong>用能量守恒反推</strong>：</p>
+
+  <div class="note">
+    <b>摄入 − 消耗 = 身体储存的能量变化</b><br>
+    → <b>TDEE = 日均摄入 − 日均储存能量变化</b>
+  </div>
+
+  <h4>算法步骤</h4>
+  <ul class="plain">
+    <li><b>① 先算趋势体重</b>，不能用原始体重（水分、钠、大餐都会造成单日剧烈波动）。
+      业界用 EWMA（α≈0.1）或卡尔曼滤波（位置 / 速度 / 加速度三状态）。</li>
+    <li><b>② 取近 14 天</b>趋势体重的变化量，乘以组织能量密度
+      （脂肪约 9400 kcal/kg、瘦体重约 1800，实务常用混合近似 <code>7700 kcal/kg</code>），
+      再除以天数 → 得到每天净储存了多少能量。</li>
+    <li><b>③ 用日均摄入减去它</b> → 就是真实 TDEE。</li>
+    <li><b>④ 14–21 天收敛</b>，之后滚动窗口每周更新。</li>
+  </ul>
+
+  <div class="alert">
+    <span class="ti">这个算法的唯一致命陷阱</span>
+    <b>漏记整餐会系统性低估 TDEE。</b>如果你只记了两餐，算法会以为你「只吃了这么多」，
+    从而推算出你的消耗也很低，进而把目标越调越低 —— 形成恶性循环。
+    所以实现时必须能识别「这天记录不完整」并把该天剔除。
+  </div>
+
+  <div class="note">
+    <span class="ti">为什么识食特别适合做这个</span>
+    自适应 TDEE 需要两个输入：<b>精确的摄入量</b> 和 <b>连续的体重记录</b>。<br><br>
+    大多数 App 缺的是前者 —— 用户「搜食物 → 选份量」记出来的摄入量本身误差就很大，
+    反推出来的 TDEE 自然也准不了。<br><br>
+    而识食是<b>按克扣库存</b>：你买了 1000g 鸡胸肉，吃了 150g 就扣 150g，
+    摄入量的精度天然比「大概一份」高一个量级。<b>这是我们的结构优势，应该用上。</b>
+  </div>
+
+  <h4>另外两个可以做的评分体系</h4>
+  <div class="tbl">
+    <div class="tr head"><div class="k">体系</div><div class="v">要点</div></div>
+    <div class="tr">
+      <div class="k">Nutri-Score</div>
+      <div class="v">
+        <b>负分</b> = 能量 + 糖 + 饱和脂肪 + 盐（各按分段给 0–10/15/20 分）<br>
+        <b>正分</b> = 果蔬豆坚果 + 膳食纤维 + 蛋白质<br>
+        <b>总分 = 负分 − 正分</b>，分级 A(&lt;1) / B(&lt;3) / C(&lt;11) / D(&lt;19) / E(≥19)
+      </div>
+    </div>
+    <div class="tr">
+      <div class="k">NOVA</div>
+      <div class="v">
+        按加工程度分 4 组：1 未加工 / 2 烹饪原料 / 3 加工 / 4 超加工。<br>
+        可用配料表里是否出现「家庭厨房不会用的添加剂」来判第 4 组。
+      </div>
+    </div>
+  </div>
+
+  <h2>五、依从性研究：人为什么会放弃</h2>
+
+  <p>这是最扎心的一节。学术研究给出了明确的数字：</p>
+
+  <div class="tbl">
+    <div class="tr head"><div class="k">指标</div><div class="v">数值</div></div>
+    <div class="tr"><div class="k">中位使用时长</div><div class="v"><b>约 29 天</b></div></div>
+    <div class="tr"><div class="k">常见弃用拐点</div><div class="v"><b>第 11 天</b></div></div>
+    <div class="tr"><div class="k">第 1–3 天记满 2 餐的比例</div><div class="v">89%</div></div>
+    <div class="tr"><div class="k">14 天后仍坚持的比例</div><div class="v"><b style="color:var(--danger)">27%</b></div></div>
+  </div>
+
+  <h4>弃用的四个主因（CHI 2015 研究）</h4>
+  <ul class="plain">
+    <li><b>录入摩擦</b> —— 每次都要搜食物、选份量，太累</li>
+    <li><b>份量不确定</b> —— 不知道吃了多少克，干脆不记</li>
+    <li><b>外食 / 社交场景</b> —— 在外面吃饭时没法记</li>
+    <li><b>罪恶感提醒</b> —— 这个最反直觉</li>
+  </ul>
+
+  <div class="alert">
+    <span class="ti">「你已超支」这类提醒，反而会把人赶走</span>
+    研究发现 <b>negative nudge（负面提示）会显著提高弃用率</b>。
+    用户看到「你今天超标 300 kcal」的感受是「我搞砸了」，而不是「我要调整」。<br><br>
+    <b>识食现在正好踩这个坑</b>：吃超了会显示红色的「超 X g」。
+    信息本身没错（不该被隐藏），但<b>措辞和视觉处理需要改</b>——
+    比如改成中性的「已超出 12g」，去掉红色警告感。
+  </div>
+
+  <h4>已知有效的留存手段</h4>
+  <ul class="plain">
+    <li>减少录入步骤（<b>EAS 框架</b>：先删字段 → 再自动化 → 最后才谈简化）</li>
+    <li>拍照 / 语音记录，而不是打字</li>
+    <li>只保留最常用的十几个食物，不要一上来就让人面对 87 项</li>
+    <li><b>允许「脏记录」</b> —— 记个大概也比不记好，不要因为不精确就拒绝记录</li>
+    <li>关掉惩罚性的 streak（连续天数断了不该有惩罚感）</li>
+    <li><b>看周趋势，不看单日</b> —— 单日波动是噪声</li>
+  </ul>
+
+  <p class="src">来源：
+    <a href="https://dl.acm.org/doi/10.1145/2702123.2702155" target="_blank">CHI 2015 · Barriers and Negative Nudges</a> ·
+    <a href="https://www.nngroup.com/articles/eas-framework-simplify-forms/" target="_blank">NN/g · EAS Framework</a>
+  </p>
+
+  <h2>六、中餐的特殊性 —— 这其实是我们的护城河</h2>
+
+  <p>调研里最有价值的发现之一：<strong>中餐在营养识别上比西餐难得多</strong>，而行业通用方案在中文场景基本失效。</p>
+
+  <h4>中餐的三难</h4>
+  <ul class="plain">
+    <li><b>混合菜肴难分割</b> —— 一盘宫保鸡丁里有鸡肉、花生、黄瓜、辣椒，还有油和糖</li>
+    <li><b>同名不同做法</b> —— 「红烧肉」各家糖油用量能差一倍</li>
+    <li><b>隐形热量</b> —— 一盘炒青菜能吸 <b>20–30g 油</b>；勾芡、糖醋、干煸都会大幅改变热量</li>
+  </ul>
+
+  <p>主流 App 的做法是<strong>「整菜识别」</strong>——拍一张照片，猜出这是「红烧肉」，
+    然后查表给一个固定值。在中餐场景下，这个方法误差极大。</p>
+
+  <div class="note">
+    <span class="ti">而识食的「库存记账」天然是食材级的</span>
+    你买菜的时候就把食材拆开了（鸡胸肉 1000g、西兰花 300g、橄榄油 500ml），
+    吃的时候按克扣减。<b>压根不需要「整菜识别」这一步</b> —— 因为记录的单位本来就是食材，不是菜。<br><br>
+    这不是「我们也有个功能」，而是<b>结构性的差异</b>。
+    调研的所有项目里，没有一个用这种记账模型。<br><br>
+    <b>这句话应该成为推广的核心论点：</b>别人在解决「怎么猜出一盘菜有多少热量」，
+    我们在解决「你买了多少、吃了多少」—— 后者是能算准的，前者永远算不准。
+  </div>
+
+  <h2>七、份量估算：最难的一环</h2>
+
+  <p>照片识别出「这是什么」相对容易，难的是「你吃了多少克」。行业方案对比：</p>
+
+  <div class="tbl">
+    <div class="tr head"><div class="k">方案</div><div class="v">可行性</div></div>
+    <div class="tr"><div class="k">参照物</div><div class="v">放个已知尺寸的物体（硬币/卡片）进画面。准确但用户嫌麻烦</div></div>
+    <div class="tr"><div class="k">深度 / 双目</div><div class="v">准确，但需要特殊硬件，普通手机做不到</div></div>
+    <div class="tr"><div class="k">单图深度学习回归</div><div class="v">纯 2D 单图估体积<b>误差很大</b>，不实用</div></div>
+    <div class="tr"><div class="k">记忆历史份量</div><div class="v"><b>零成本、最有效</b> —— 记住「上次这份米饭是 150g」</div></div>
+    <div class="tr"><div class="k">档位修正</div><div class="v">识别后给 小 / 中 / 大 三个档一键选，比输数字快</div></div>
+  </div>
+
+  <p><strong>结论：不要假装精确。</strong>先给一个估计值，然后让用户一键修正，
+    并把修正结果记住用于下次 —— 这是投入产出比最高的做法。</p>
+
+  <h2>八、差距清单与行动优先级</h2>
+
+  <div class="prio">
+    <div class="pr">
+      <span class="pv p0">P0</span>
+      <div class="body">
+        <div class="t">补上 3 个国标强制字段：钠、饱和脂肪、糖</div>
+        <p class="d">这是<b>合规问题，不是功能取舍</b>。数据要补进 87 条食物库，
+          拍照识别的 prompt 也要跟着改（让模型一并提取）。钠尤其重要 ——
+          中国饮食最大的健康风险点。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p0">P0</span>
+      <div class="body">
+        <div class="t">环形图 → 条形 + 数字</div>
+        <p class="d">NN/g 的结论很明确：长度比角度好读。而且 Apple HIG 把 Activity 圆环
+          保留给了健康三环，不该挪用。改成条形后，<b>同时解决了可读性和合规两个问题</b>。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p1">P1</span>
+      <div class="body">
+        <div class="t">「超 X」改中性措辞</div>
+        <p class="d">研究显示负面提示会显著提高弃用率。信息要保留（不该隐藏），
+          但去掉红色警告感和「你搞砸了」的暗示，改成中性的「已超出 12g」。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p1">P1</span>
+      <div class="body">
+        <div class="t">测非文本元素对比度，逐个量触控目标</div>
+        <p class="d">我们一直在测正文对比度，但<b>进度条、日历格子、分隔线这些非文本元素的
+          3:1 要求从没测过</b>。小按钮（关闭 ×、序号徽标）也要在真机上量到 ≥44pt。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p1">P1</span>
+      <div class="body">
+        <div class="t">自适应 TDEE</div>
+        <p class="d">用能量守恒反推真实消耗，替掉现在的公式估算。
+          我们<b>已经同时有精确摄入（按克扣库存）和体重日志</b> —— 这是做这件事最好的形态，
+          但行业里没人有这两个输入同时精确的条件。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p2">P2</span>
+      <div class="body">
+        <div class="t">记忆历史份量 + 档位修正</div>
+        <p class="d">拍照识别后记住用户修正过的克重，下次直接给。以及给「小 / 中 / 大」
+          三档快捷键，比输数字快得多。</p>
+      </div>
+    </div>
+    <div class="pr">
+      <span class="pv p2">P2</span>
+      <div class="body">
+        <div class="t">Nutri-Score 评分 + 识别结果校验</div>
+        <p class="d">用 Nutri-Score 给单件食品打分，让用户一眼看出好坏。
+          另外照 Open Food Facts 的做法，<b>给识别结果加数值合理性校验</b>
+          （比如蛋白质+脂肪+碳水不能超过 100g/100g），现在模型给什么就用什么。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:32px">
+    <span class="ti">这份调研最该记住的一条</span>
+    <b>做功能前先查规范。</b>我花了七轮打磨交互和视觉，却漏掉了国标强制字段 ——
+    这不是「还可以更好」，而是「本来就不合格」。<br><br>
+    <b>规范类的信息，成本最低、收益最高，而且它不会因为你的审美判断而改变。</b>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    识食 · AI 饮食管家 — 行业调研报告<br>
+    <span style="font-size:12px">营养数据为估算，仅供参考，不构成医疗建议</span>
+  </div>
+</footer>
+
+</body>
+</html>
