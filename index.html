@@ -51,7 +51,7 @@
   --d-fiber:#5c8a72;
   /* 间距与形状 */
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
-  --track:#eceae4;
+  --track:#d5d1c7;
 }
 @media(prefers-color-scheme:dark){
   :root{
@@ -62,7 +62,7 @@
     --danger:#e0736a; --danger-soft:#2c1e1c;
     --warn:#d9a441; --warn-soft:#2b2418;
     --d-protein:#7fa3d4; --d-fat:#dcae72; --d-carb:#b096d4; --d-fiber:#8fc4a4;
-    --track:#2a2925;
+    --track:#3c3a33;
   }
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -168,22 +168,26 @@ a.linkbtn.solid{background:var(--accent);color:#fff;border:1px solid var(--accen
 .bar{height:6px;background:var(--track);border-radius:4px;overflow:hidden;margin:5px 0 2px}
 .bar>i{display:block;height:100%;border-radius:4px;transition:width .55s cubic-bezier(.4,0,.2,1)}
 
-/* ---------- 热量环 ---------- */
-.ring{
-  width:150px;height:150px;border-radius:50%;
-  background:conic-gradient(var(--rc) calc(var(--p)*1%),var(--track) 0);
-  display:grid;place-items:center;margin:6px auto 0;position:relative;
-}
-.ring::after{
-  content:"";position:absolute;inset:0;border-radius:50%;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.03);
-}
-.ring>div{
-  width:118px;height:118px;border-radius:50%;background:var(--surface);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.ring b{font-size:32px;font-weight:600;line-height:1.05;color:var(--ink)}
-.ring span{font-size:11px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em}
+/* ---------- 热量主指标：条形 + 数字 ----------
+   为什么不用环形图：NN/g 指出长度是最准确的视觉编码，角度/面积最差，
+   环形图还挖空更难读；Apple HIG 也把 Activity 圆环保留给健康三环，不宜挪用。
+   状态另给文字（还差 / 已超出），不单靠颜色 —— 约 4.5% 的人有色觉障碍。 */
+.kcalhero{padding:2px 0 4px}
+.kh-lab{font-size:12.5px;color:var(--ink-2);font-weight:500;margin-bottom:7px}
+.kh-num{display:flex;align-items:baseline;gap:7px;margin-bottom:9px}
+.kh-num b{font-size:38px;font-weight:600;line-height:1;letter-spacing:-.025em;
+  color:var(--ink);font-variant-numeric:tabular-nums}
+.kh-num em{font-style:normal;font-size:15px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kh-num .kh-u{font-size:12.5px;color:var(--ink-3);margin-left:-2px}
+.kh-bar{height:12px;background:var(--track);border-radius:6px;overflow:hidden}
+.kh-bar>i{display:block;height:100%;border-radius:6px;background:var(--accent);
+  transition:width .55s cubic-bezier(.4,0,.2,1)}
+.kcalhero.over .kh-bar>i{background:var(--warn)}
+.kh-foot{display:flex;align-items:baseline;gap:10px;margin-top:7px;
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kh-foot b{color:var(--ink-2);font-weight:600}
+.kh-foot span{margin-left:auto}
+.kcalhero.over .kh-foot b{color:var(--warn)}
 
 /* ---------- 宏量营养素行 ---------- */
 .mac{display:grid;grid-template-columns:42px 1fr 92px;align-items:center;gap:10px;margin-top:12px;font-size:12.5px}
@@ -1297,6 +1301,14 @@ function renderToday(){
   }
   const pct=c.target?Math.min(100,Math.round(t.k/c.target*100)):0;
   const over=t.k>c.target;
+  const kcalLeft=Math.round(c.target-t.k);
+  /* 热量主指标：用「条形 + 数字」而不是环形图。
+     · NN/g：长度是最准确的视觉编码，角度/面积最差；环形图还挖空，更难读
+     · Apple HIG：Activity 圆环保留给「移动/锻炼/站立」，不得挪用
+     · 状态用文字说明（还差 / 已达标 / 已超出），不单靠红绿 —— 约 4.5% 的人有色觉障碍 */
+  const kcalState = kcalLeft>0 ? `还差 ${kcalLeft} kcal`
+    : kcalLeft<0 ? `已超出 ${Math.abs(kcalLeft)} kcal`
+    : `正好达标`;
   const mm=(v,tg,col,label,dec)=>{
     const p=tg?Math.min(100,Math.round(v/tg*100)):0;
     const left=tg-v;
@@ -1319,7 +1331,13 @@ function renderToday(){
     <div class="daytag">${dayTag}
       <button class="btn-s" style="padding:4px 9px;font-size:11.5px;margin-left:auto" onclick="planSheet('${d}')">${pl?"改日程":"排日程"}</button>
     </div>
-    <div class="ring" style="--p:${pct};--rc:${over?'var(--danger)':'var(--accent)'}"><div><b>${Math.round(t.k)}</b><span>/ ${c.target} kcal · ${pct}%</span></div></div>
+    <div class="kcalhero${over?" over":""}" role="group" aria-label="今日热量进度">
+      <div class="kh-lab">今日热量</div>
+      <div class="kh-num"><b>${Math.round(t.k)}</b><em>/ ${c.target}</em><span class="kh-u">kcal</span></div>
+      <div class="kh-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"
+           aria-label="热量已完成 ${pct}%，${kcalState}"><i style="width:${pct}%"></i></div>
+      <div class="kh-foot"><b>${kcalState}</b><span>已完成 ${pct}%</span></div>
+    </div>
     <div class="hint" style="justify-content:center;margin-top:12px"><span>基础代谢 ${c.bmr} ＋ 日常 ${c.tdee-c.bmr} ＋ 训练 ${c.exK}${Number(S.profile.adj)?` ${S.profile.adj>0?"＋":"−"} ${Math.abs(S.profile.adj)} 目标`:""}${!tr&&c.restAdj?` ${c.restAdj>0?"＋":"−"} ${Math.abs(c.restAdj)} 休息日`:""}</span></div>
     ${c.floorApplied?`<div class="hint" style="margin-top:8px;color:var(--warn)">${ic("alert",14)}<span>已应用热量下限保护（不低于基础代谢 1.1 倍），避免过度节食</span></div>`:""}
     ${c.pgCapped?`<div class="hint" style="margin-top:8px">${ic("info",14)}<span>蛋白质目标已限制在总热量 35% 以内</span></div>`:""}
@@ -1337,7 +1355,7 @@ function renderToday(){
   h+=`<div class="card remain">
     <div>
       <div class="hint" style="margin:0"><span>${gap.kcal>0?"今天还能吃":"已超出"}</span></div>
-      <div class="rmk" style="color:${gap.kcal>0?"var(--ink)":"var(--danger)"}">${Math.abs(Math.round(c.target-t.k))}<span class="unit">kcal</span></div>
+      <div class="rmk" style="color:${gap.kcal>0?"var(--ink)":"var(--warn)"}">${Math.abs(Math.round(c.target-t.k))}<span class="unit">kcal</span></div>
       <div class="hint" style="margin-top:2px"><span>${gap.p>0?`蛋白还差 ${Math.round(gap.p)} g`:"蛋白已达标"} · ${gap.fb>0?`纤维还差 ${Math.round(gap.fb)} g`:"纤维已达标"}</span></div>
     </div>
     <button class="btn-g" style="width:auto;padding:13px 20px" onclick="quickSheet()">${ic("bolt",18)}快速记录</button>
@@ -1351,12 +1369,19 @@ function renderToday(){
     ["f","脂肪",c.fg-t.f," g","var(--d-fat)"],
     ["fb","膳食纤维",c.fb-t.fb," g","var(--d-fiber)"],
   ];
+  /* 吃超时：保留信息（不该隐藏），但去掉「警告」感。
+     CHI 2015 研究显示负面提示（negative nudge）会显著提高弃用率 ——
+     用户看到「超标 300」的感受是「我搞砸了」，而不是「我要调整」。
+     所以：措辞改中性（已超出），颜色用 amber 而不是危险红。 */
+  let anyOver=false;
   h+=`<div class="card"><h3>${ic("target",18)}还差多少<span class="count">实时扣减</span></h3>
     <div class="gaplist">${rows.map(([k,lab,v,unit,col])=>{
       const neg=v<0;
+      if(neg)anyOver=true;
       return `<div class="gaprow"><span class="gl"><i style="background:${col}"></i>${lab}</span>
-        <b style="color:${neg?"var(--danger)":"var(--ink)"}">${neg?"超 "+(k==="kcal"?Math.round(-v):(-v).toFixed(1)):(k==="kcal"?Math.round(v):Math.round(v*10)/10)}${unit||" kcal"}</b></div>`;
+        <b style="color:${neg?"var(--warn)":"var(--ink)"}">${neg?"已超出 "+(k==="kcal"?Math.round(-v):(-v).toFixed(1)):(k==="kcal"?Math.round(v):Math.round(v*10)/10)}${unit||" kcal"}</b></div>`;
     }).join("")}</div>
+    ${anyOver?`<div class="hint" style="margin-top:10px"><span>单项超出很常见，看一周的整体趋势比盯单日更有意义。</span></div>`:""}
     ${sug?`<div class="sugg">${ic("bolt",14)}<span>库存里 <b>${sug.need}g ${esc(sug.food.n)}</b> 可补足${sug.label}</span>
       <button class="btn-s" style="margin-left:auto;flex-shrink:0" onclick="eatSheet('${sug.food.id}')">去记录</button></div>`
       :`<div class="sugg" style="background:var(--surface-2);color:var(--ink-3)">${ic("bolt",14)}<span>库存里还没能精准补缺口的食材</span></div>`}
