@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<title>识食 · 手机上怎么用</title>
+<style>
+:root{
+  --canvas:#faf8f5; --surface:#fff; --surface-2:#f0ede7;
+  --ink:#2b2a27; --ink-2:#6b675f; --ink-3:#9a948a;
+  --line:#e6e2da;
+  --accent:#3B7A57; --accent-soft:#eaf1ec;
+  --danger:#c0392b; --warn:#b8860b;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --canvas:#141412; --surface:#1c1b19; --surface-2:#26241f;
+    --ink:#eae7e0; --ink-2:#a8a29a; --ink-3:#7a746b;
+    --line:#2e2c28;
+    --accent:#7fb894; --accent-soft:#1f2b23;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--canvas);color:var(--ink);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 80px;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 22px}
+header{
+  border-bottom:1px solid var(--line);background:var(--surface);
+  padding:40px 0 32px;margin-bottom:36px;
+}
+h1{font-size:28px;font-weight:650;letter-spacing:-.02em;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1 .badge{
+  font-size:11.5px;font-weight:600;letter-spacing:.04em;
+  background:var(--accent-soft);color:var(--accent);
+  padding:4px 10px;border-radius:6px;
+}
+header p{color:var(--ink-2);margin-top:12px;font-size:15px;max-width:640px}
+header .links{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+header .links a{
+  color:var(--accent);text-decoration:none;font-size:13.5px;font-weight:500;
+  border:1px solid var(--line);padding:9px 16px;border-radius:8px;
+  transition:background .18s,border-color .18s;background:var(--surface);
+}
+header .links a:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+h2{
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);margin:48px 0 18px;display:flex;align-items:center;gap:12px;
+}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:17px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+p{margin:0 0 12px;color:var(--ink-2)}
+p strong{color:var(--ink);font-weight:600}
+code{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.86em;background:var(--surface-2);padding:2px 6px;border-radius:4px;
+  color:var(--ink);word-break:break-all;
+}
+a{color:var(--accent)}
+
+/* 大按钮：手机上必须好点 */
+.big{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--accent);color:#fff;text-decoration:none;
+  padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;
+  min-height:48px;
+}
+@media(prefers-color-scheme:dark){.big{color:#0c1310}}
+.bigwrap{text-align:center;margin:26px 0 10px}
+
+/* 步骤 */
+.steps{counter-reset:s;list-style:none;margin:0 0 8px}
+.steps>li{
+  counter-increment:s;position:relative;
+  padding:0 0 20px 44px;border-left:1px solid var(--line);margin-left:14px;
+}
+.steps>li:last-child{border-left-color:transparent;padding-bottom:0}
+.steps>li::before{
+  content:counter(s);
+  position:absolute;left:-15px;top:-2px;
+  width:29px;height:29px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  font-size:13.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+@media(prefers-color-scheme:dark){.steps>li::before{color:#0c1310}}
+.steps>li .t{font-weight:600;font-size:15px;margin-bottom:4px;padding-top:2px}
+.steps>li .d{font-size:14px;color:var(--ink-2)}
+
+/* 平台卡 */
+.plat{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 6px}
+.pc{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--surface)}
+.pc .hd{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.pc .hd b{font-size:14.5px;font-weight:600}
+.pc .os{font-size:11px;font-weight:600;letter-spacing:.04em;padding:3px 8px;border-radius:5px;
+  background:var(--accent-soft);color:var(--accent)}
+.pc ol{margin:0;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+.pc li{padding:3px 0;line-height:1.6}
+.pc li b{color:var(--ink);font-weight:600}
+.pc .warn{margin-top:12px;font-size:12.5px;color:var(--danger);line-height:1.55}
+
+/* 表格 */
+.tbl{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin:6px 0 8px}
+.tr{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px;align-items:flex-start}
+.tr:last-child{border-bottom:none}
+.tr .k{flex:0 0 96px;font-weight:600;font-size:13.5px}
+.tr .v{flex:1;color:var(--ink-2);font-size:13.5px}
+.tr .v b{color:var(--ink)}
+
+/* 提示块 */
+.note{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;
+  font-size:14px;color:var(--ink);line-height:1.65;
+}
+.note b{color:var(--accent)}
+.note .ti{font-weight:600;display:block;margin-bottom:4px}
+.alert{
+  border-left:3px solid var(--danger);background:#f8ecea;
+  padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;
+  font-size:14px;color:var(--ink);line-height:1.65;
+}
+.alert .ti{font-weight:600;display:block;margin-bottom:4px;color:var(--danger)}
+@media(prefers-color-scheme:dark){.alert{background:#2b1f1c}}
+
+/* FAQ */
+.faq{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.fq{padding:15px 16px;border-bottom:1px solid var(--line)}
+.fq:last-child{border-bottom:none}
+.fq .q{font-weight:600;font-size:14.5px;margin-bottom:6px;display:flex;gap:9px;align-items:flex-start}
+.fq .q::before{content:"Q";font-size:11px;font-weight:700;background:var(--surface-2);
+  color:var(--ink-3);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px}
+.fq .a{font-size:13.5px;color:var(--ink-2);padding-left:29px;line-height:1.65}
+.fq .a b{color:var(--ink)}
+
+nav.toc{
+  border:1px solid var(--line);border-radius:14px;background:var(--surface);
+  padding:16px 18px;margin:0 0 8px;
+}
+nav.toc .ti{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:10px}
+nav.toc ol{margin:0;padding-left:0;list-style:none;columns:2;column-gap:20px}
+nav.toc li{padding:3px 0;font-size:13.5px;break-inside:avoid}
+nav.toc a{text-decoration:none;color:var(--ink-2)}
+nav.toc a:hover{color:var(--accent)}
+nav.toc a::before{content:"· ";color:var(--ink-3)}
+
+footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
+  padding-top:26px;border-top:1px solid var(--line)}
+
+@media(max-width:640px){
+  h1{font-size:22px}
+  .plat{grid-template-columns:1fr}
+  nav.toc ol{columns:1}
+  .wrap{padding:0 18px}
+  .tr{flex-direction:column;gap:4px}
+  .tr .k{flex:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>识食 · 手机上怎么用 <span class="badge">上手指南</span></h1>
+    <p>从打开链接到装成 App，再到每天真正用起来——大概 3 分钟看完。</p>
+    <div class="links">
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/" target="_blank">🌐 打开识食</a>
+      <a href="https://github.com/hkkdling-sketch/shishi-diet" target="_blank">GitHub 仓库</a>
+      <a href="../report/">改造报告</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="bigwrap">
+    <a class="big" href="https://hkkdling-sketch.github.io/shishi-diet/" target="_blank">🌐 点这里打开识食</a>
+  </div>
+  <p style="text-align:center;font-size:13px;color:var(--ink-3)">
+    或者手动输入：<code>hkkdling-sketch.github.io/shishi-diet</code>
+  </p>
+
+  <nav class="toc">
+    <div class="ti">目录</div>
+    <ol>
+      <li><a href="#install">装到桌面（推荐）</a></li>
+      <li><a href="#start">第一次用：建档</a></li>
+      <li><a href="#inv">第二次用：入库</a></li>
+      <li><a href="#daily">每天就两件事</a></li>
+      <li><a href="#tabs">五个标签都干什么</a></li>
+      <li><a href="#ai">AI 拍照识别（可选）</a></li>
+      <li><a href="#backup">数据备份（重要）</a></li>
+      <li><a href="#faq">常见问题</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="install">一、装到桌面</h2>
+  <p>不装也能用，但装了之后<strong>有图标、全屏、断网也能开</strong>，体验接近原生 App。强烈建议装。</p>
+
+  <div class="plat">
+    <div class="pc">
+      <div class="hd"><span class="os">iPhone</span><b>Safari</b></div>
+      <ol>
+        <li>用 <b>Safari</b> 打开链接</li>
+        <li>点底部中间的 <b>分享按钮</b>（方框带向上箭头）</li>
+        <li>往下滑，选 <b>「添加到主屏幕」</b></li>
+        <li>右上角 <b>「添加」</b></li>
+      </ol>
+      <div class="warn">⚠️ 必须是 Safari。微信内置浏览器、Chrome 都做不了这一步。</div>
+    </div>
+    <div class="pc">
+      <div class="hd"><span class="os">安卓</span><b>Chrome / 自带浏览器</b></div>
+      <ol>
+        <li>用浏览器打开链接</li>
+        <li>点右上角 <b>⋮ 菜单</b></li>
+        <li>选 <b>「添加到主屏幕」</b> 或 <b>「安装应用」</b></li>
+        <li>确认</li>
+      </ol>
+      <div class="warn">⚠️ 部分国产浏览器菜单里叫「添加到桌面」，位置可能不同。</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="ti">为什么一定要装到桌面？</span>
+    不装的话，每次都要开浏览器、找书签、等加载。装了之后点一下图标就是全屏 App，
+    没有地址栏干扰，而且 Service Worker 能把页面缓存下来——<b>断网也能记录</b>。
+  </div>
+
+  <h2 id="start">二、第一次用：建档</h2>
+  <p>打开后先切到 <strong>「我的」</strong> 标签，把这几项填了：</p>
+  <div class="tbl">
+    <div class="tr"><div class="k">身高 / 体重</div><div class="v">算基础代谢用，<b>不填其他页面都算不出数字</b></div></div>
+    <div class="tr"><div class="k">年龄 / 性别</div><div class="v">影响基础代谢和膳食纤维推荐量</div></div>
+    <div class="tr"><div class="k">活动系数</div><div class="v">平时运动量，5 档。拿不准选「轻度活动」</div></div>
+    <div class="tr"><div class="k">目标</div><div class="v">减脂 / 保持 / 增肌，5 档</div></div>
+    <div class="tr"><div class="k">蛋白质 g/kg</div><div class="v">减脂建议 1.6–2.0，普通 1.2 就够</div></div>
+  </div>
+  <p>填完下方会立刻算出你的 <strong>BMR / TDEE / 今日目标</strong>，以及训练日和休息日两套对照。</p>
+
+  <div class="note">
+    <span class="ti">为什么要有两套目标？</span>
+    今天练了和今天没练，身体该吃的东西不一样。识食会自动判断：
+    <b>你今天有训练记录 = 训练日</b>，否则 = 休息日。训练日热量目标更高、蛋白质更多、膳食纤维多 5g。
+    <b>你不用手动切，它自己认。</b>
+  </div>
+
+  <h2 id="inv">三、第二次用：入库</h2>
+  <p>这是识食和别的热量 App <strong>最不一样的地方</strong>。切到 <strong>「库存」</strong> 标签，把冰箱里的东西按克重录进去。</p>
+  <p>比如：鸡胸肉 1000g、鸡蛋 500g、牛奶 1000ml、西兰花 300g……</p>
+  <p>录入方式三种，随便挑：</p>
+  <div class="tbl">
+    <div class="tr"><div class="k">拍照识别</div><div class="v">在「拍照」页拍包装上的营养成分表，识别后点 <b>「只加入库存」</b></div></div>
+    <div class="tr"><div class="k">内置食物库</div><div class="v">87 条常见食材，搜索选择即可</div></div>
+    <div class="tr"><div class="k">手动输入</div><div class="v">食物库里没有的，自己填名称和营养</div></div>
+  </div>
+  <div class="note">
+    <span class="ti">这一步值得花 5 分钟</span>
+    录完之后，每次吃东西只要点一下「扣减」，它就知道你冰箱还剩多少、
+    <b>还能吃几天、该买什么了</b>。而且推荐吃什么也是从你真实有的东西里挑，
+    不会推一个你根本没有的食材。
+  </div>
+
+  <h2 id="daily">四、每天就两件事</h2>
+
+  <h3 style="margin-top:24px">① 吃东西了 → 记一笔</h3>
+  <ol class="steps">
+    <li><div class="t">打开「拍照」页</div><div class="d">或者直接从「库存」页点某个食材的「吃掉」</div></li>
+    <li><div class="t">拍照 + 填克重</div><div class="d">AI 会识别出营养，识别完<b>一定人工核对一下</b>，可以改</div></li>
+    <li><div class="t">选一个按钮</div><div class="d">
+      <b>「记入今日·并扣减库存」</b>——吃的是冰箱里的，库存跟着减<br>
+      <b>「外食·不扣库存」</b>——在外面吃的，只记营养，不动库存
+    </div></li>
+  </ol>
+
+  <h3 style="margin-top:28px">② 练了 → 录一下</h3>
+  <ol class="steps">
+    <li><div class="t">打开「训练」页 → 记录训练</div><div class="d">选「跑步」</div></li>
+    <li><div class="t">填距离</div><div class="d">比如 <code>5</code> km。用时填 <code>30</code> 分钟（选填）</div></li>
+    <li><div class="t">看实时预估</div><div class="d">下方会立刻显示 <b>−363 kcal</b>，还会告诉你用的哪种算法</div></li>
+  </ol>
+
+  <div class="note">
+    <span class="ti">为什么填距离而不是配速？</span>
+    因为<b>跑同样距离消耗的热量，跟你跑多快基本无关</b>。
+    5 公里，25 分钟跑完和 40 分钟跑完，消耗几乎一样。
+    所以识食只问你「跑了多远」，不问配速——问配速反而会更不准。<br><br>
+    如果戴了手表，可以顺便填一下<b>平均心率</b>，识食会切换成更准的心率算法，
+    还会告诉你处在哪个心率区间。
+  </div>
+
+  <h2 id="tabs">五、五个标签都干什么</h2>
+  <div class="tbl">
+    <div class="tr"><div class="k">今日</div><div class="v">
+      最核心的一页。<b>「还差多少」</b>实时显示热量 / 蛋白质 / 碳水 / 脂肪 / 膳食纤维各还差多少。
+      吃超了会显示 <b>「超 X」</b> 而不是清零。下面还会从你库存里推荐该补什么，一键去记录。
+    </div></div>
+    <div class="tr"><div class="k">训练</div><div class="v">
+      记录训练 + <b>训练日历</b>。日历上可以提前排好哪天练、练什么、多久；
+      排好的日程点一下就能带进记录，不用重填。
+    </div></div>
+    <div class="tr"><div class="k">库存</div><div class="v">
+      你冰箱的数字版。<b>消耗速度预测</b>（每样食材还能吃几天）、<b>自动采购清单</b>、
+      每样食材的<b>自定义提醒线</b>、14 天消耗曲线。想推推广告也在这页。
+    </div></div>
+    <div class="tr"><div class="k">拍照</div><div class="v">
+      拍照识别 + <b>外食手填</b>。AI 接口设置也在这里。三个按钮分别对应：
+      扣库存 / 不扣库存 / 只加入库存。
+    </div></div>
+    <div class="tr"><div class="k">我的</div><div class="v">
+      个人资料、训练日 / 休息日目标对照、休息日热量调整、<b>自定义动作库</b>、
+      体重趋势、数据导出导入。
+    </div></div>
+  </div>
+
+  <h2 id="ai">六、AI 拍照识别（可选，但要配 Key）</h2>
+  <p>不配也能用——内置 87 条食物库 + 手动输入完全够起步。配了之后拍张照就能自动填营养表，省事很多。</p>
+  <p><strong>免费方案（国内直连，不用梯子）：</strong></p>
+  <ol class="steps">
+    <li><div class="t">注册智谱账号</div><div class="d"><a href="https://open.bigmodel.cn/" target="_blank">open.bigmodel.cn</a> → 创建一个 API Key</div></li>
+    <li><div class="t">进识食的「拍照」页</div><div class="d">展开最下面的「识别接口设置」</div></li>
+    <li><div class="t">选服务商</div><div class="d">选 <b>「智谱 GLM-4V-Flash（免费）」</b></div></li>
+    <li><div class="t">粘贴 Key → 保存</div><div class="d">之后就能拍照识别了</div></li>
+  </ol>
+  <div class="note">
+    <span class="ti">Key 存在哪？</span>
+    <b>只存在你自己手机浏览器的 localStorage 里</b>，不会上传到任何服务器，识食本身也没有服务器。
+    申请时额度用不完的话，GLM-4V-Flash 目前是免费的。
+  </div>
+  <p style="font-size:13.5px">另外还有两个预设：<strong>通义千问 Qwen-VL</strong>、<strong>OpenAI GPT-4o-mini</strong>。任何 OpenAI 兼容的接口都能填自定义地址。</p>
+
+  <h2 id="backup">七、数据备份（这条很重要）</h2>
+  <div class="alert">
+    <span class="ti">数据只在你手机本地，丢了自己找不回来</span>
+    识食没有服务器、没有账号，「不上传」是它的优点，但代价是：
+    <b>清理浏览器数据、换手机、卸载浏览器，记录就全没了。</b>
+  </div>
+  <p>所以养成习惯——每隔一两周去 <strong>「我的」页 → 导出备份</strong>，存一个 JSON 文件（发到自己微信文件传输助手就行）。</p>
+  <p>换手机时在新手机上 <strong>「导入备份」</strong>，数据就回来了。</p>
+  <div class="note">
+    <span class="ti">为什么不做云同步？</span>
+    因为云同步意味着要有服务器、要有账号、要承担隐私责任。识食选择做成<b>单文件、零后端</b>，
+    数据永远不出你这台设备。代价就是需要你自己备份——这是个明确的取舍，不是遗漏。
+  </div>
+
+  <h2 id="faq">八、常见问题</h2>
+  <div class="faq">
+    <div class="fq">
+      <div class="q">添加到主屏幕后图标是空白的 / 名字不对？</div>
+      <div class="a">删掉重新添加一次。如果还是不行，说明浏览器没读到 <code>manifest.json</code>——确认你打开的是完整网址（带 <code>/shishi-diet/</code> 结尾），不是某篇文章里的链接。</div>
+    </div>
+    <div class="fq">
+      <div class="q">更新了版本，我手机上还是旧版？</div>
+      <div class="a">Service Worker 会先给你缓存的旧版（这样打开才快），再后台悄悄下载新版。<b>关闭 App 再打开一次</b>就更新了。如果还没变，等一分钟再开。</div>
+    </div>
+    <div class="fq">
+      <div class="q">拍照识别报错 / 一直转圈？</div>
+      <div class="a">检查三件事：① Key 填对了吗（别多空格）；② 选的模型和 Key 是不是同一家的；③ 网络能不能通。想快速排除网络问题，可以先不填 Key，用内置食物库测试记录功能是否正常。</div>
+    </div>
+    <div class="fq">
+      <div class="q">我吃了半个苹果，库存里没有苹果怎么办？</div>
+      <div class="a">直接走 <b>「外食·不扣库存」</b> 或手动填一条就行。库存是给你<b>家里存的东西</b>用的，临时买的不必入库。</div>
+    </div>
+    <div class="fq">
+      <div class="q">跑步消耗算出来和我手表不一样？</div>
+      <div class="a">手表多半用了心率带 + 个人 VO2max 建模，更准。识食用的是<b>体重 × 距离</b>的通用公式，误差通常在 5–10%。想更准就填平均心率，会切换到心率算法。任何 App 的消耗都是估算，别当精确值用。</div>
+    </div>
+    <div class="fq">
+      <div class="q">训练日 / 休息日怎么切换？要手动设吗？</div>
+      <div class="a">不用。<b>有训练记录就是训练日</b>，没有就是休息日。你也可以在「训练 → 日历」里提前排课，排了就算训练日。</div>
+    </div>
+    <div class="fq">
+      <div class="q">能在电脑上用吗？</div>
+      <div class="a">能，同一个链接用浏览器打开就是完整功能，界面会自适应。但手机上用最方便——毕竟你要拍照。数据不会自动同步，是两套独立的本地数据。</div>
+    </div>
+    <div class="fq">
+      <div class="q">要付费吗？有什么隐藏费用？</div>
+      <div class="a">完全免费，MIT 开源，可以商用。唯一的成本是如果你要用 AI 拍照，那部分是<b>你自己给模型厂商付</b>（智谱 GLM-4V-Flash 目前免费）。识食本身不碰钱、也没有账号体系。</div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:32px">
+    <span class="ti">一句话总结每天怎么用</span>
+    <b>吃东西 → 拍照页记一笔；练了 → 训练页填距离；然后看今日页还差多少。</b>
+    就这三件事。
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    识食 · AI 饮食管家 — 手机上手指南<br>
+    <span style="font-size:12px">营养数据为估算，仅供参考，不构成医疗建议</span>
+  </div>
+</footer>
+
+</body>
+</html>
