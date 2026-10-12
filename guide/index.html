@@ -289,7 +289,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
   <h3 style="margin-top:24px">① 吃东西了 → 记一笔</h3>
   <ol class="steps">
     <li><div class="t">打开「拍照」页</div><div class="d">或者直接从「库存」页点某个食材的「吃掉」</div></li>
-    <li><div class="t">拍照 + 填克重</div><div class="d">AI 会识别出营养，识别完<b>一定人工核对一下</b>，可以改</div></li>
+    <li><div class="t">选图 + 填克重</div><div class="d">两个按钮：<b>「拍照」</b>直接开相机；<b>「从相册选」</b>用你手机里已经拍好的照片——<b>不用为了识别重新拍一遍</b>。相册可以<b>一次选多张</b>（最多 6 张），选完能逐张删掉不想要的。AI 识别完<b>一定人工核对一下</b>，可以改。</div></li>
     <li><div class="t">选一个按钮</div><div class="d">
       <b>「记入今日·并扣减库存」</b>——吃的是冰箱里的，库存跟着减<br>
       <b>「外食·不扣库存」</b>——在外面吃的，只记营养，不动库存
@@ -368,6 +368,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
 
   <h2 id="faq">八、常见问题</h2>
   <div class="faq">
+    <div class="fq">
+      <div class="q">能不能用手机里已经拍好的照片？不想为了识别再拍一遍。</div>
+      <div class="a">能。<b>「拍照」页有两个按钮：「拍照」和「从相册选」</b>。点「从相册选」就会打开你的相册，挑之前拍好的图就行。<b>还能一次选多张</b>——选错了点缩略图右上角的 × 删掉，或者点「清空」重来。</div>
+    </div>
+    <div class="fq">
+      <div class="q">拍包装食品要拍两张（配料表 + 营养成分表），要分两次识别吗？</div>
+      <div class="a">不用。<b>一次把两张都选进来，一起发过去识别</b>，模型会在同一个上下文里交叉比对，比分开识别两次更准。最多支持 6 张。</div>
+    </div>
     <div class="fq">
       <div class="q">应用商店里搜不到识食？有没有 APK 可以下载？</div>
       <div class="a">都没有，<b>这是正常的</b>。识食是网页应用（PWA），不做安装包、也不上架应用商店——因为上架要开发者账号、要服务器、要审核，而识食刻意做成<b>零后端、零账号</b>。「安装」的方式就是上面的「添加到主屏幕」。</div>
