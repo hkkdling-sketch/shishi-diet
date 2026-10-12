@@ -202,7 +202,24 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
   </nav>
 
   <h2 id="install">一、装到桌面</h2>
-  <p>不装也能用，但装了之后<strong>有图标、全屏、断网也能开</strong>，体验接近原生 App。强烈建议装。</p>
+
+  <div class="alert">
+    <span class="ti">先澄清一件事：识食没有「安装包」可以下载</span>
+    它不是从应用商店下的那种 App，而是一个<b>网页应用（PWA）</b>。<br>
+    所以：没有 APK 文件、应用商店里搜不到。<br>
+    <b>「下载」= 用浏览器打开，然后「添加到主屏幕」。</b>加完之后桌面会多一个图标，
+    点开就是全屏 App，没有地址栏——<b>这就是安装完成了。</b>
+  </div>
+
+  <div class="note">
+    <span class="ti">最省事的办法：用应用里自带的按钮</span>
+    打开识食后，首页顶部有一条 <b>「装到桌面，断网也能记」</b> 的横条。
+    <b>安卓点它右边的按钮就会弹出系统的安装框，点一下确认就行</b>，不用去翻浏览器菜单。<br><br>
+    如果没看到那条横条，或者点的是「怎么装」，会弹出对应你手机的图文步骤。<br>
+    也可以随时去 <b>「我的」页</b> 找到安装卡片。
+  </div>
+
+  <p>手动装也不难，分两种手机：</p>
 
   <div class="plat">
     <div class="pc">
@@ -216,14 +233,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
       <div class="warn">⚠️ 必须是 Safari。微信内置浏览器、Chrome 都做不了这一步。</div>
     </div>
     <div class="pc">
-      <div class="hd"><span class="os">安卓</span><b>Chrome / 自带浏览器</b></div>
+      <div class="hd"><span class="os">安卓</span><b>Chrome / Edge</b></div>
       <ol>
-        <li>用浏览器打开链接</li>
+        <li>用 <b>Chrome</b> 或 <b>Edge</b> 打开链接</li>
         <li>点右上角 <b>⋮ 菜单</b></li>
-        <li>选 <b>「添加到主屏幕」</b> 或 <b>「安装应用」</b></li>
+        <li>选 <b>「安装应用」</b>（有的叫「添加到主屏幕」）</li>
         <li>确认</li>
       </ol>
-      <div class="warn">⚠️ 部分国产浏览器菜单里叫「添加到桌面」，位置可能不同。</div>
+      <div class="warn">⚠️ 国产浏览器菜单里叫「添加到桌面」，位置可能不同，不好找就换 Chrome。</div>
     </div>
   </div>
 
@@ -351,6 +368,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;
 
   <h2 id="faq">八、常见问题</h2>
   <div class="faq">
+    <div class="fq">
+      <div class="q">应用商店里搜不到识食？有没有 APK 可以下载？</div>
+      <div class="a">都没有，<b>这是正常的</b>。识食是网页应用（PWA），不做安装包、也不上架应用商店——因为上架要开发者账号、要服务器、要审核，而识食刻意做成<b>零后端、零账号</b>。「安装」的方式就是上面的「添加到主屏幕」。</div>
+    </div>
+    <div class="fq">
+      <div class="q">首页那条「装到桌面」的横条怎么没了？</div>
+      <div class="a">三种情况：① 你已经装了（在桌面图标里打开时不会显示）；② 之前点过右边的 <b>×</b>；③ 安卓 Chrome 判断你已装过。想找回来就去 <b>「我的」页</b>，那里有常驻的安装卡片。</div>
+    </div>
     <div class="fq">
       <div class="q">添加到主屏幕后图标是空白的 / 名字不对？</div>
       <div class="a">删掉重新添加一次。如果还是不行，说明浏览器没读到 <code>manifest.json</code>——确认你打开的是完整网址（带 <code>/shishi-diet/</code> 结尾），不是某篇文章里的链接。</div>
