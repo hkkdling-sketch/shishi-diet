@@ -1,18 +1,20 @@
 # 识食 · 推广素材包
 
-> 定位一句话：**别的 App 记「你吃了多少」，识食算「你还剩多少、够吃几天」。**
+> 定位一句话：**别的 App 记你吃了多少，识食算你还剩多少 —— 还按你练不练，天天换目标。**
 
 这个包里的东西都是**公开发布型**素材——发出去让人自己找过来，
 不需要私信、不需要逐个联系任何人。
 
 ---
 
-## 0. 先想清楚：为什么是「库存」这个角度
+## 0. 先想清楚：为什么是「库存 + 训练」这两个角度
 
 市面上所有热量 App 都在比**食物库大小**（100 万条 vs 200 万条）。
 那是军备竞赛，个人项目比不过。
 
-识食的差异点是**记账单位不同**：
+识食的差异点在两个地方：
+
+**一、记账单位不同：**
 
 | | 主流 App | 识食 |
 |---|---|---|
@@ -21,26 +23,39 @@
 | 用户动作 | 搜食物 → 选份量 | 买菜时入库一次 → 之后吃多少扣多少 |
 | 买菜决策 | 不参与 | **自动生成采购清单** |
 
-这个角度好推，因为它**反常识**——「我用库存来记饮食」这句话本身就能引起好奇。
+**二、回答的是「还剩多少」，不是「吃了多少」：**
+
+> 今天练了、今天没练、今天在外边吃的 ——
+> 每一种情况下你该吃多少都不一样，主流 App 给的却是同一个静态数字。
+
+| | 主流 App | 识食 |
+|---|---|---|
+| 目标 | 一个固定的每日目标 | **训练日 / 休息日两套**，蛋白按强度上调、纤维 +5g |
+| 运动 | 从 20 项固定菜单里选 | **直接填「跑了 5 公里，30 分钟」** |
+| 显示 | 已摄入 1800 / 2200 kcal | **还差 400 kcal、还差 26g 蛋白**，从你库存里挑食材补 |
+| 外食 | 记一笔就完了 | 拍照记账，**明确不扣库存** |
+
+这两个角度都好推，因为它们**反常识**——
+「我用库存来记饮食」、「我填的是跑了多少公里」这两句话本身就能引起好奇。
 
 ---
 
 ## 1. 一句话介绍（多语言版本，按平台选）
 
 中文（口语）：
-> 拍张照就知道吃了多少营养。但它更狠的地方是——**按库存记账**。买回来的菜入库一次，之后吃多少扣多少，它会告诉你「鸡胸肉还能吃 6 天」并自动列出该买什么。
+> 拍张照就知道吃了多少营养。但它更狠的地方是——**按库存记账**。买回来的菜入库一次，之后吃多少扣多少，它会告诉你「鸡胸肉还能吃 6 天」并自动列出该买什么。今天跑了 5 公里它会算出消耗多少卡，然后把今天该吃的蛋白质量往上调，再告诉你「还差多少、库存里拿什么补」。
 
 中文（正式）：
-> 识食是一个按「库存」而非「条目」记账的饮食管理 PWA。纯前端单文件、零依赖、数据只存本地。
+> 识食是一个按「库存」而非「条目」记账的饮食管理 PWA。训练消耗按距离计算（不是固定菜单），营养目标随训练日 / 休息日自动切换。纯前端单文件、零依赖、数据只存本地。
 
 English (casual):
-> Photograph your food, get the macros. But the real trick: it tracks **your pantry**, not just your meals. Log groceries once, deduct as you eat — it tells you "chicken breast: 6 days left" and builds your shopping list.
+> Photograph your food, get the macros. But the real trick: it tracks **your pantry**, not just your meals. Log groceries once, deduct as you eat — it tells you "chicken breast: 6 days left" and builds your shopping list. Ran 5 km? It computes the burn from distance, bumps your protein target, then tells you **what's still missing and which thing in your pantry covers it**.
 
 English (formal):
-> Shishi is a single-file, offline-first PWA that tracks nutrition by **pantry inventory** rather than by meal entries. BYOK AI photo recognition, zero backend, all data stays in your browser.
+> Shishi is a single-file, offline-first PWA that tracks nutrition by **pantry inventory** rather than by meal entries. Exercise burn is distance-based (no fixed exercise list), and daily macro targets switch automatically between training and rest days. BYOK AI photo recognition, zero backend, all data stays in your browser.
 
 日本語：
-> 写真を撮るだけで栄養がわかる。でも本当の違いは**在庫管理**。買った食材を一度登録すれば、食べた分だけ減っていく。「鶏むね肉はあと6日」と教えてくれて、買い物リストまで作ってくれます。
+> 写真を撮るだけで栄養がわかる。でも本当の違いは**在庫管理**。買った食材を一度登録すれば、食べた分だけ減っていく。「鶏むね肉はあと6日」と教えてくれて、買い物リストまで作ってくれます。5km走った日は距離から消費カロリーを計算し、たんぱく質の目標を上げたうえで「あと何が足りないか」まで教えてくれます。
 
 ---
 
@@ -273,6 +288,11 @@ https://hkkdling-sketch.github.io/shishi-diet/
 | 记账单位 | **库存** | 餐次条目 | 库存 | 餐次条目 |
 | 消耗预测 | ✅ 按实际消耗算 | ❌ | 部分（保质期） | ❌ |
 | 自动采购清单 | ✅ | ❌ | ✅ | ❌ |
+| 运动消耗 | **按距离/心率算，自由输入** | 固定数据库 | ❌ | ❌ |
+| 训练日/休息日双目标 | ✅ | 部分（付费） | ❌ | ❌ |
+| 训练日程日历 | ✅ | ❌ | ❌ | ❌ |
+| 膳食纤维独立追踪 | ✅ | ✅ | 部分 | ❌ |
+| 外食不扣库存 | ✅ | N/A | ❌ | ❌ |
 | 账号 | **不需要** | 必须 | 必须 | 不需要 |
 | 数据位置 | **仅本机** | 云端 | 云端 | 本机 |
 | 部署 | **单文件** | SaaS | SaaS | Docker |
@@ -312,9 +332,23 @@ https://hkkdling-sketch.github.io/shishi-diet/
 
 > **别的 App 记你吃了多少，识食算你还剩多少。**
 
+升级版（信息量更大，推荐优先用这条）：
+
+> **别的 App 记你吃了多少，识食算你还剩多少 —— 还按你练不练，天天换目标。**
+
 英文：
 
 > **Every calorie app logs meals. This one runs your pantry.**
+
+升级版：
+
+> **Every calorie app logs meals. This one runs your pantry — and rewrites your macros depending on whether you trained today.**
+
+单独拿运动这点做钩子也可以（同类产品里很少见）：
+
+> **别的跑步 App 问你配速，它只问你跑了多远 —— 因为 5 公里就是 5 公里，跑快跑慢消耗差不多。**
+
+> **Most fitness apps pick your burn from a list of 20 exercises. This one computes it from `1.036 × kg × km`.**
 
 ---
 
