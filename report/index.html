@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>识食 · 改造报告</title>
+<style>
+:root{
+  --canvas:#faf8f5; --surface:#fff; --surface-2:#f0ede7;
+  --ink:#2b2a27; --ink-2:#6b675f; --ink-3:#9a948a;
+  --line:#e6e2da;
+  --accent:#3B7A57; --accent-soft:#eaf1ec;
+  --danger:#c0392b; --warn:#b8860b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--canvas);color:var(--ink);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 80px;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header{
+  border-bottom:1px solid var(--line);background:var(--surface);
+  padding:44px 0 36px;margin-bottom:44px;
+}
+h1{font-size:30px;font-weight:650;letter-spacing:-.02em;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1 .badge{
+  font-size:11.5px;font-weight:600;letter-spacing:.04em;
+  background:var(--accent-soft);color:var(--accent);
+  padding:4px 10px;border-radius:6px;
+}
+header p{color:var(--ink-2);margin-top:12px;font-size:15px;max-width:640px}
+header .links{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+header .links a{
+  color:var(--accent);text-decoration:none;font-size:13.5px;font-weight:500;
+  border:1px solid var(--line);padding:7px 14px;border-radius:8px;
+  transition:background .18s,border-color .18s;
+}
+header .links a:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+h2{
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);margin:52px 0 20px;display:flex;align-items:center;gap:12px;
+}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:17px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+p{margin:0 0 12px;color:var(--ink-2)}
+p strong{color:var(--ink);font-weight:600}
+code{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.88em;background:var(--surface-2);padding:1.5px 5px;border-radius:4px;
+  color:var(--ink);
+}
+
+/* 指标网格 */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:8px}
+.stat{background:var(--surface);padding:20px 18px}
+.stat b{display:block;font-size:26px;font-weight:650;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--accent);line-height:1.25}
+.stat span{font-size:12.5px;color:var(--ink-3);display:block;margin-top:3px}
+
+/* 缺陷表 */
+.defects{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.dr{display:flex;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+.dr:last-child{border-bottom:none}
+.sev{
+  flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  padding:3px 8px;border-radius:5px;margin-top:2px;min-width:52px;text-align:center;
+}
+.sev.hi{background:#f8ecea;color:var(--danger)}
+.sev.mid{background:#fbf3e2;color:var(--warn)}
+.sev.new{background:var(--accent-soft);color:var(--accent)}
+.dr .body{flex:1}
+.dr .t{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.dr .d{font-size:13.5px;color:var(--ink-2);margin:0}
+
+/* 对照 */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.opt{border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--surface)}
+.opt.bad{background:#fdfaf9}
+.opt h4{font-size:13.5px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.opt h4 i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.opt.bad h4 i{background:var(--danger)}
+.opt.good h4 i{background:var(--accent)}
+.opt ul{list-style:none;font-size:13.5px;color:var(--ink-2)}
+.opt li{padding:6px 0 6px 20px;position:relative;line-height:1.6}
+.opt li::before{position:absolute;left:0;top:6px;font-size:12px;font-weight:700}
+.opt.bad li::before{content:"✕";color:var(--danger);opacity:.75}
+.opt.good li::before{content:"✓";color:var(--accent)}
+
+/* 色板 */
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:12px}
+.sw{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.sw .c{height:62px}
+.sw .m{padding:10px 12px}
+.sw .m b{display:block;font-size:13px;font-weight:600}
+.sw .m span{font-size:11.5px;color:var(--ink-3);font-family:ui-monospace,monospace}
+
+/* 截图 */
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:20px}
+.shot{text-align:center}
+.shot img{
+  width:100%;border-radius:14px;border:1px solid var(--line);
+  box-shadow:0 4px 20px rgba(43,42,39,.07);display:block;
+}
+.shot figcaption{font-size:12.5px;color:var(--ink-3);margin-top:10px;line-height:1.5}
+.shot figcaption b{color:var(--ink);font-weight:600;display:block;margin-bottom:2px;font-size:13px}
+
+/* 测试 */
+.tests{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.tr{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.tr:last-child{border-bottom:none}
+.tr .ok{color:var(--accent);font-weight:700;flex-shrink:0}
+.tr .n{flex:1}
+.tr .r{color:var(--ink-3);font-size:12.5px;font-family:ui-monospace,monospace;flex-shrink:0}
+
+.note{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;
+  font-size:14px;color:var(--ink);
+}
+.note b{color:var(--accent)}
+footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:64px;
+  padding-top:28px;border-top:1px solid var(--line)}
+pre{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;font-size:12.5px;line-height:1.65;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--ink);
+  margin:0 0 14px;
+}
+@media(max-width:720px){
+  .pair{grid-template-columns:1fr}
+  h1{font-size:24px}
+  .shots{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>识食 · AI 饮食管家 <span class="badge">改造报告</span></h1>
+    <p>把一个「算法正确但工程粗糙」的单文件应用，改造成能真正交付给用户的成品。四轮迭代：修掉 3 个致命 bug、重做整套视觉系统、把「库存」从列表变成会算的系统、再补上习惯层。</p>
+    <p style="margin-top:14px"><strong>一句话定位：别的 App 记你吃了多少，识食算你还剩多少。</strong></p>
+    <div class="links">
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/" target="_blank">🌐 在线体验</a>
+      <a href="https://github.com/hkkdling-sketch/shishi-diet" target="_blank">GitHub 仓库</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><b>3</b><span>致命 bug 修复</span></div>
+    <div class="stat"><b>7</b><span>首轮缺陷修补</span></div>
+    <div class="stat"><b>33</b><span>内联 SVG 图标</span></div>
+    <div class="stat"><b>75</b><span>自动化断言</span></div>
+    <div class="stat"><b>9.5:1</b><span>深色对比度</span></div>
+    <div class="stat"><b>0px</b><span>横向溢出</span></div>
+  </div>
+
+  <h2>致命缺陷</h2>
+  <p>这三个问题里，第 1 个最要命——它意味着你后续做的任何改进，都送不到用户手里。</p>
+  <div class="defects">
+    <div class="dr">
+      <span class="sev hi">严重</span>
+      <div class="body">
+        <div class="t">Service Worker 缓存永不更新</div>
+        <p class="d">原版是 <code>cache-first</code> + 硬编码版本号 <code>shishi-v3</code>。用户第一次访问后，浏览器就永远拿缓存，你发了新版他还是看旧的。改为 <code>stale-while-revalidate</code>：秒开 + 后台静默拉新。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev hi">严重</span>
+      <div class="body">
+        <div class="t">蛋白质目标失控（可达 44% 热量）</div>
+        <p class="d">90kg 用户选 2.4g/kg = 216g 蛋白 = 792 kcal。若在减脂期（目标 1800 kcal），蛋白质 alone 就占 44%，碳水被挤到几乎没有。已加 35% 上限——这是运动营养学中有文献依据的阈值。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev hi">严重</span>
+      <div class="body">
+        <div class="t">热量目标可低于基础代谢</div>
+        <p class="d">小个子女性选「减脂 −500」会算出低于 BMR 的目标，长期执行有害健康，产品却没有任何拦截。已加 BMR×1.1 下限保护。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev mid">中等</span>
+      <div class="body">
+        <div class="t">emoji 当图标</div>
+        <p class="d">🥗📊🥬📷 在 iOS / Android / Windows 上渲染差异极大——有的彩色、有的方框、有的基线错位。已全部替换为 24 个内联 SVG，统一 <code>stroke-width:1.8</code> 线宽。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev mid">中等</span>
+      <div class="body">
+        <div class="t">原生 prompt / confirm 弹窗</div>
+        <p class="d">记录吃掉食物时弹出浏览器的丑陋原生对话框，在 PWA 独立窗口模式下体验尤其割裂。已全部换成自建底部抽屉。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev mid">中等</span>
+      <div class="body">
+        <div class="t">库存这个唯一差异点被浪费</div>
+        <p class="d">「库存管家」是本品类唯一的差异功能，但原版把 20 样食材平铺成一长条，没有分组、没有余量提醒——用户根本感受不到它和别的 App 有什么不同。已做分类分组 + 低量提醒条。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev mid">中等</span>
+      <div class="body">
+        <div class="t">无输入校验</div>
+        <p class="d">年龄能填 999、体重能填 0，<code>calc()</code> 直接产出垃圾数字。已加合理区间校验（年龄 10–100、身高 100–250、体重 25–300、单次运动 ≤600 分钟）。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>额外发现（只有真实浏览器才能抓到）</b><br>
+    组装完成后，我在真实 Chromium 里截图，发现<strong>首屏是完全空白的</strong>——
+    因为 <code>#tab-today</code> 没有 <code>.on</code> 类，而 <code>.tab{display:none}</code>。<br>
+    诡异的是：DOM stub 测试全绿（元素存在、内容长度 635、渲染函数正常返回）。
+    这是一个 <strong>纯 DOM 测试永远抓不到、只有像素级渲染才能发现</strong>的 bug。已修复。
+  </div>
+
+  <h2>交互对照</h2>
+  <div class="pair">
+    <div class="opt bad">
+      <h4><i></i>改造前</h4>
+      <ul>
+        <li><code>prompt("吃多少克")</code> 弹原生框</li>
+        <li>看不到吃多少营养，全靠自己算</li>
+        <li>库存 20 样食材平铺，无分组</li>
+        <li>快吃完了没有任何提示</li>
+        <li>补货 / 删除后无反馈</li>
+        <li>搜索食物平铺全列表</li>
+      </ul>
+    </div>
+    <div class="opt good">
+      <h4><i></i>改造后</h4>
+      <ul>
+        <li>底部抽屉：显示剩余量 + 快捷份量</li>
+        <li><strong>实时营养预览</strong>：改克重即时显示摄入</li>
+        <li>按分类分组，每组带数量</li>
+        <li>顶部黄色提醒条列出所有低量食材</li>
+        <li>统一 toast 反馈</li>
+        <li>下拉建议，带每 100g 热量</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>最关键的一个细节</h3>
+  <p>抽屉里输入克重时，下方<strong>实时显示这一口吃进去多少营养</strong>：</p>
+  <pre>≈ 133 kcal · 蛋白 19.4 · 脂肪 5.0 · 碳水 2.5 g</pre>
+  <p>原版没有这个。但用户真正想知道的就是「我吃这 150g 鸡胸肉到底摄入了多少」。它把一次「填数字」变成了「有反馈的决策」——这是让产品从「能用」变成「好用」的地方。</p>
+
+  <h2>第二轮 · 把「库存」从列表变成系统</h2>
+  <p>第一轮只是让库存<strong>能看</strong>，第二轮让它<strong>会算</strong>。核心判断：纯记录型 App 用户记两天就懒得记了，因为它<strong>不还嘴</strong>。只有让它主动产出「还够吃几天」「该买什么」「今天差多少蛋白」，用户才有理由每天回来。</p>
+  <div class="defects">
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">消耗速度预测</div>
+        <p class="d">「还剩 620g」是没用的信息，<strong>「还能吃 6 天」才是有用的</strong>。按近 7 天实际消耗算日均，预测每样食材的剩余天数，并汇总出整柜续航。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">自动采购清单</div>
+        <p class="d">从「提醒你库存低了」升级到「告诉你要买多少」。按真实消耗速度把低量食材补足到够吃 7 天，一键生成、可复制。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">缺口分析 + 蛋白补足建议</div>
+        <p class="d">对比目标与已摄入，算出还差多少。然后<strong>从你自己的库存里</strong>按蛋白密度挑最优解：「吃 1150g 希腊酸奶 可补足蛋白」。这是同类产品都没有的能力——它把「知道差多少」变成了「知道该吃什么」。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">每项自定义提醒线 + 14 天消耗柱图</div>
+        <p class="d">鸡蛋剩 25g 该买、巴旦木剩 60g 不用买——一个全局阈值管不了所有食材。每项可设独立提醒线，点开还能看自己的真实消耗曲线。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>关键设计：样本不足时不给预测</b><br>
+    消耗预测最容易犯的错是「拿一天数据就开始预测」。所以 <code>dailyBurn()</code> 在
+    <strong>有记录的天数少于 2 天时返回 <code>null</code></strong>，界面显示「待记录」而不是一个假数字。<br><br>
+    理由：如果昨天只记了一次「吃了 500g 鸡胸肉」，算出来日均 500g、预测「还剩 1 天」——这是纯噪声，
+    会直接误导采购决策。<strong>宁可显示「还不知道」，也不要显示一个错的。</strong>
+  </div>
+
+  <h2>第三轮 · 首屏信息层级</h2>
+  <p>第二轮做完后截图发现两个真问题：库存页把「手动添加食物」表单放在最上面，用户每天进来第一眼看到的是一张填表框；而本轮新增的<strong>「今日还差」卡被挤到了首屏以下</strong>——最难做的功能藏得最深。</p>
+  <div class="tests">
+    <div class="tr"><span class="ok">→</span><span class="n">手动添加改为 <code>&lt;details&gt;</code> 折叠，移到所有汇总卡之后（添加是低频操作，看库存是高频操作）</span><span class="r">已修正</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">压缩概览卡内边距与行高，为主信息腾出首屏空间</span><span class="r">已修正</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">新增溢出提示：概览卡 / 缺口卡不在首屏时测试直接报错</span><span class="r">已加断言</span></div>
+  </div>
+  <p style="margin-top:16px">修正前后首屏卡片位置：</p>
+  <p><strong>修正前</strong> 库存总计 <code>@104</code> … 今日还差 <code>@735</code>（被导航栏 <code>@843</code> 遮住大半）<br>
+     <strong>修正后</strong> 库存总计 <code>@104</code> · 今日还差 <code>@263</code> · 我的库存 <code>@473</code> —— 全部在首屏内</p>
+
+  <h2>第四轮 · 习惯层（连续记录 + 体重趋势）</h2>
+  <p>库存管家解决了「这个工具能算什么」，但没解决「用户为什么明天还会打开」。要让人回来，得给一个<strong>每天看一眼就知道自己状态</strong>的东西。</p>
+  <div class="defects">
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">连续记录天数</div>
+        <p class="d">两个克制的设计决定：① <strong>今天还没记不算断</strong>——当天还没结束，这时归零会让用户觉得被惩罚；② <strong>空数组不算记录</strong>。另外同时显示「本月天数」和「历史最长连续」，只有当前 streak 会让人焦虑（断了就全没了），加上积累型的指标后断了也不归零。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">新增</span>
+      <div class="body">
+        <div class="t">体重趋势：看斜率，不看单日</div>
+        <p class="d">体重每天波动 1–2kg 是正常的（水分、食物残留），所以显示单日变化没有意义。改用<strong>最小二乘拟合斜率</strong>，输出 <strong>kg/周</strong>——这是营养学界描述体重变化的标准单位，也天然过滤掉了日间噪声。少于 2 个数据点直接返回 <code>null</code>，不拿单点瞎画趋势线。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>一个图标引发的教训</b><br>
+    连续记录卡用了一个火焰图标，但渲染出来是<strong>一个水滴</strong>——原路径顶端是对称圆滑的，没有火焰该有的尖。
+    <strong>光看 <code>path</code> 字符串完全判断不出来。</strong><br><br>
+    解法：写一个临时页面把 6 个候选路径用 76px 并排渲染对比，再单独预览 38px 实际尺寸下的效果，最后才选中正确的那个。<br>
+    <strong>图标是图形，不是代码——必须渲染出来看。</strong>
+  </div>
+
+  <h2>GitHub 调研：采纳与否决</h2>
+  <p>按「上 GitHub 找自己没有的 / 可优化的」要求调研了同类项目，其中三个有参考价值：</p>
+  <div class="tests">
+    <div class="tr"><span class="ok">✓</span><span class="n"><code>brandonp2412/FitBook</code>（174★）7000+ 食物库（源自 CORGIS 数据集）</span><span class="r">食物库扩充方向</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n"><code>LowCarbCheck/openplate</code>（57★）自托管 + 本地优先 + BYOK</span><span class="r">定位验证</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n"><code>garettie/eatlog</code> 体重趋势线（看斜率不看单日）</span><span class="r">已落地</span></div>
+  </div>
+  <div class="note">
+    <b>明确否决：接入 OpenFoodFacts API</b><br>
+    调研时看到 FitBook / openplate 都用它做条形码查询，看起来很香（免费、百万条数据）。但实测中文数据后否决了：<br><br>
+    <code>搜索「全麦面包」→ 仅 1 条命中，且该条 energy-kcal_100g 为 null</code><br>
+    <code>搜索「鸡胸肉」 → 7 条命中，全是包装即食鸡胸肉，无生鲜数据</code><br><br>
+    开放食物库的中文覆盖以<strong>进口包装食品</strong>为主，中国用户买菜场景（生鲜、散装）基本查不到。
+    加进去的代价是引入网络依赖和一次 API 调用，换来的却是不可靠结果——
+    <strong>这会让用户觉得「识别不准」，伤害的是核心信任</strong>。不如把 87 条内置数据做扎实。
+  </div>
+
+
+  <p>原版是「绿→青渐变 + 高饱和」，属于典型的 AI 生成感设计语言。新版的思路是<strong>去掉所有装饰性表达</strong>：渐变改中性表面 + 一条 hairline；强调色从亮绿 <code>#16a34a</code> 换成<strong>松花绿</strong>——中国传统色，饱和度和明度都低，更接近真实植物的颜色，用在数据可视化上不刺眼。</p>
+  <div class="swatches">
+    <div class="sw"><div class="c" style="background:#faf8f5"></div><div class="m"><b>骨白</b><span>#faf8f5</span></div></div>
+    <div class="sw"><div class="c" style="background:#3B7A57"></div><div class="m"><b>松花绿</b><span>#3B7A57</span></div></div>
+    <div class="sw"><div class="c" style="background:#2b2a27"></div><div class="m"><b>墨</b><span>#2b2a27</span></div></div>
+    <div class="sw"><div class="c" style="background:#4a6fa5"></div><div class="m"><b>蛋白</b><span>#4a6fa5</span></div></div>
+    <div class="sw"><div class="c" style="background:#c8873f"></div><div class="m"><b>脂肪</b><span>#c8873f</span></div></div>
+    <div class="sw"><div class="c" style="background:#7c5c9e"></div><div class="m"><b>碳水</b><span>#7c5c9e</span></div></div>
+  </div>
+  <p style="margin-top:16px">其他细节：圆角从全 <code>999px</code> 胶囊改为 8/12/16/20 四级；数字统一 <code>tabular-nums</code> 等宽（数值不跳动）；阴影几乎看不见（<code>0 1px 2px rgba(43,42,39,.03)</code>），只提供层次。</p>
+
+  <h2>实测截图</h2>
+  <div class="shots">
+    <figure class="shot">
+      <img src="after-stock-light.png" alt="库存页">
+      <figcaption><b>库存（浅色）</b>续航预测环 + 补货提醒 + 缺口分析，全部在首屏</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="after-today-light.png" alt="今日页">
+      <figcaption><b>今日（浅色）</b>热量环 + 目标拆解 + 连续记录卡</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="after-me-light.png" alt="我的页">
+      <figcaption><b>我的（浅色）</b>体重趋势折线 + 周斜率估算</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="after-eat-light.png" alt="吃掉抽屉">
+      <figcaption><b>吃掉抽屉</b>实时营养预览 + 快捷份量</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="after-stock-dark.png" alt="库存页深色">
+      <figcaption><b>库存（深色）</b>强调色自动提亮到 9.5:1</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="after-me-dark.png" alt="我的页深色">
+      <figcaption><b>我的（深色）</b>跟随系统主题</figcaption>
+    </figure>
+  </div>
+
+  <h2>测试体系</h2>
+  <p>单文件应用最容易失控的地方是「改了 A 破坏了 B」。所以配了<strong>六层零依赖校验、共 75 条断言</strong>，全部通过才算改动合格。</p>
+  <div class="tests">
+    <div class="tr"><span class="ok">✓</span><span class="n">结构校验：标签配对、必需函数、边界保护标记、emoji 残留</span><span class="r">0 错误</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">运行时冒烟：最小 DOM stub 跑 boot / calc / 渲染全流程</span><span class="r">全部通过</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">核心边界：极端减脂、高蛋白封顶、库存闭环、撤销回滚</span><span class="r">6 / 6</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">库存管家：消耗预测、采购清单、缺口分析、分类推断</span><span class="r">35 / 35</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">撤销回滚：精确还原、吃光重建、跨日期退款</span><span class="r">6 / 6</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">习惯层：连续天数、月度统计、体重趋势斜率</span><span class="r">28 / 28</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">真实浏览器：双主题截图、控制台错误、对比度、首屏可见性</span><span class="r">无错误</span></div>
+  </div>
+  <p style="margin-top:16px">关键断言：宏量回算偏差 <strong>≤ 4 kcal</strong> · 蛋白质 <strong>≤ 35%</strong> 热量 · 脂肪 <strong>≥ 0.5 g/kg</strong> · 总热量 <strong>≥ BMR×1.1</strong> · 库存「吃掉→撤销」克重<strong>精确还原</strong> · 消耗预测<strong>不足 2 天返回 null</strong> · 体重趋势<strong>不足 2 点返回 null</strong> · 浅色对比度 <strong>≥4.5:1</strong>、深色 <strong>≥7:1</strong>。</p>
+
+  <div class="note">
+    <b>教训一：DOM stub 不能替代真实浏览器</b><br>
+    那个「首屏空白」的 bug，在 stub 里所有断言都是绿的（元素存在、内容非空），
+    只有 Playwright 截图才发现父容器是 <code>display:none</code>。
+    所以浏览器渲染测试是<strong>必跑项</strong>，不是可选项。<br><br>
+    <b>教训二：改了代码但行为没变，先确认文件进了构建产物</b><br>
+    改火焰图标时先改了 <code>_build/icons.js</code>，重跑组装脚本，重新截图——<strong>完全没变</strong>。
+    原来是组装脚本只拼 <code>new.css + new_body.html + new_app.js</code>，
+    <code>icons.js</code> 是重构残骸，<strong>从来没被引用</strong>。
+    <code>grep</code> 一下产物文件里有没有刚写的字符串，两秒就能确认。
+  </div>
+
+  <h2>上线状态</h2>
+  <div class="tests">
+    <div class="tr"><span class="ok">✓</span><span class="n">GitHub 仓库已公开</span><span class="r">hkkdling-sketch/shishi-diet</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">GitHub Pages 已开启，构建无错误</span><span class="r">HTTP 200</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">全部资源在线可访问（含图标 / manifest / sw）</span><span class="r">字节精确匹配</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">线上端到端实测：建档 → 入库 → 吃掉 → 记体重 → 看趋势</span><span class="r">全流程通过</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">仓库 topics 已标注</span><span class="r">10 个</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">敏感信息审计（API Key / token / 私钥）</span><span class="r">0 泄露</span></div>
+  </div>
+
+  <h2>推广素材</h2>
+  <p>按「公开发布型」准备，<strong>不需要私信或逐个联系任何人</strong>——发出去让人自己找过来。</p>
+  <div class="tests">
+    <div class="tr"><span class="ok">→</span><span class="n">一句话定位（中 / 英 / 日）：别的 App 记你吃了多少，识食算你还剩多少</span><span class="r">可复用</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">Product Hunt / Show HN / Reddit 发布文案（含「设计决策」版跟帖）</span><span class="r">已备好</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">X / 小红书 短内容</span><span class="r">已备好</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">竞品对比表（含「诚实的话」：数据库大小确实不如 MFP）</span><span class="r">已备好</span></div>
+  </div>
+  <p style="margin-top:16px">完整内容见仓库根目录 <code>PROMOTION.md</code>。发布渠道清单按「不需要主动联系任何人」筛选：Product Hunt / Show HN / r/selfhosted / 小红书 / 即刻 / V2EX 分享创造 / 少数派 Matrix。</p>
+  <div class="note">
+    <b>关于见效时间，说实话</b><br>
+    被动路径起量慢，这是结构性的，不是执行问题：开源项目冷启动通常 <strong>3–6 个月</strong>才有稳定自然流量；
+    Product Hunt / HN 单次爆发可能带来几百访问，但留存靠产品本身。<br><br>
+    <strong>能加速的事</strong>：把「设计决策」写出来（比如为什么数据不够就不给预测）。
+    技术社区对「一个具体的、可争论的决定」反应，远好于「一个新功能」。
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    识食 · AI 饮食管家 — 改造报告 · 2026-10-11<br>
+    <span style="font-size:12px">营养数据为估算，仅供参考，不构成医疗建议</span>
+  </div>
+</footer>
+
+</body>
+</html>
