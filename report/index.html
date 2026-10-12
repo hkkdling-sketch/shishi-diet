@@ -141,8 +141,8 @@ pre{
 <header>
   <div class="wrap">
     <h1>识食 · AI 饮食管家 <span class="badge">改造报告</span></h1>
-    <p>把一个「算法正确但工程粗糙」的单文件应用，改造成能真正交付给用户的成品。四轮迭代：修掉 3 个致命 bug、重做整套视觉系统、把「库存」从列表变成会算的系统、再补上习惯层。</p>
-    <p style="margin-top:14px"><strong>一句话定位：别的 App 记你吃了多少，识食算你还剩多少。</strong></p>
+    <p>把一个「算法正确但工程粗糙」的单文件应用，改造成能真正交付给用户的成品。五轮迭代：修掉 3 个致命 bug、重做整套视觉系统、把「库存」从列表变成会算的系统、补上习惯层、再让训练可自定义并把「装到手机」这条路修通。</p>
+    <p style="margin-top:14px"><strong>一句话定位：别的 App 记你吃了多少，识食算你还剩多少 —— 还按你练不练，天天换目标。</strong></p>
     <div class="links">
       <a href="https://hkkdling-sketch.github.io/shishi-diet/" target="_blank">🌐 在线体验</a>
       <a href="https://hkkdling-sketch.github.io/shishi-diet/guide/" target="_blank">📱 手机上怎么用</a>
@@ -156,8 +156,8 @@ pre{
   <div class="stats">
     <div class="stat"><b>3</b><span>致命 bug 修复</span></div>
     <div class="stat"><b>7</b><span>首轮缺陷修补</span></div>
-    <div class="stat"><b>33</b><span>内联 SVG 图标</span></div>
-    <div class="stat"><b>75</b><span>自动化断言</span></div>
+    <div class="stat"><b>60+</b><span>内联 SVG 图标</span></div>
+    <div class="stat"><b>227</b><span>自动化断言</span></div>
     <div class="stat"><b>9.5:1</b><span>深色对比度</span></div>
     <div class="stat"><b>0px</b><span>横向溢出</span></div>
   </div>
@@ -392,7 +392,7 @@ pre{
   </div>
 
   <h2>测试体系</h2>
-  <p>单文件应用最容易失控的地方是「改了 A 破坏了 B」。所以配了<strong>六层零依赖校验、共 75 条断言</strong>，全部通过才算改动合格。</p>
+  <p>单文件应用最容易失控的地方是「改了 A 破坏了 B」。所以配了<strong>七层零依赖校验、共 227 条断言</strong>，全部通过才算改动合格。</p>
   <div class="tests">
     <div class="tr"><span class="ok">✓</span><span class="n">结构校验：标签配对、必需函数、边界保护标记、emoji 残留</span><span class="r">0 错误</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">运行时冒烟：最小 DOM stub 跑 boot / calc / 渲染全流程</span><span class="r">全部通过</span></div>
@@ -400,6 +400,8 @@ pre{
     <div class="tr"><span class="ok">✓</span><span class="n">库存管家：消耗预测、采购清单、缺口分析、分类推断</span><span class="r">35 / 35</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">撤销回滚：精确还原、吃光重建、跨日期退款</span><span class="r">6 / 6</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">习惯层：连续天数、月度统计、体重趋势斜率</span><span class="r">28 / 28</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">训练层：距离法/心率法、双套目标、膳食纤维、外食、日历</span><span class="r">105 / 105</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">安装层：安卓一键装 / iOS 降级 / 已装隐藏 / 关闭提示</span><span class="r">47 / 47</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">真实浏览器：双主题截图、控制台错误、对比度、首屏可见性</span><span class="r">无错误</span></div>
   </div>
   <p style="margin-top:16px">关键断言：宏量回算偏差 <strong>≤ 4 kcal</strong> · 蛋白质 <strong>≤ 35%</strong> 热量 · 脂肪 <strong>≥ 0.5 g/kg</strong> · 总热量 <strong>≥ BMR×1.1</strong> · 库存「吃掉→撤销」克重<strong>精确还原</strong> · 消耗预测<strong>不足 2 天返回 null</strong> · 体重趋势<strong>不足 2 点返回 null</strong> · 浅色对比度 <strong>≥4.5:1</strong>、深色 <strong>≥7:1</strong>。</p>
@@ -416,12 +418,53 @@ pre{
     <code>grep</code> 一下产物文件里有没有刚写的字符串，两秒就能确认。
   </div>
 
+  <h2>第五轮 · 训练自定义 + 装到手机</h2>
+  <p>两条来自真实使用的反馈，都指向同一个问题：<strong>功能做了，但用户够不到。</strong></p>
+  <div class="defects">
+    <div class="dr">
+      <span class="sev new">训练</span>
+      <div class="body">
+        <div class="t">「项目都是固定的，我跑了 5 公里你要给我具体的消耗」</div>
+        <p class="d">拆掉 20 项固定 MET 菜单，改成 <strong>距离法 / 时长法 / 心率法</strong> 三选一。
+        关键论据：<strong>同距离的奔跑消耗与配速基本无关</strong>，所以问距离而不是配速
+        —— 70kg 跑 5km = <strong>363 kcal</strong>，且 25 分钟与 40 分钟结果相同。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">营养</span>
+      <div class="body">
+        <div class="t">训练日和休息日该吃的不一样</div>
+        <p class="d">两套目标：训练日 = <code>TDEE + 实际运动消耗</code>，休息日 = <code>TDEE + 调整</code>。
+        蛋白质按强度上调，<strong>膳食纤维新增为追踪项</strong>（IOM 标准 + 训练日 +5g）。
+        修掉一个 <strong>414 kcal 的窟窿</strong>：脂肪取 28/30%、碳水补足余量，宏量回算恒等于目标。</p>
+      </div>
+    </div>
+    <div class="dr">
+      <span class="sev new">安装</span>
+      <div class="body">
+        <div class="t">「手机上怎么下载？浏览器能打开，但没有下载」</div>
+        <p class="d">识食是 PWA，<strong>故意不做安装包</strong>。但「添加到主屏幕」这个入口在不同浏览器里
+        叫法位置全不一样。所以主动捕获 <code>beforeinstallprompt</code>，
+        <strong>首页横幅点一下就弹系统原生安装框</strong>；iOS 没有这个 API，降级成图文步骤。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>这一轮最值得记的一条</b><br>
+    没有任何算法或逻辑 bug，代码一直是正确的。缺的只是「用户不知道去哪儿点」。
+    而这类问题<strong>单元测试发现不了</strong>——测试里我们总是直接调函数、直接给元素，
+    真实用户却要先找到那个元素。<br><br>
+    所以凡是「用户第一次要做某件事」的路径（安装、初始化、导入数据），
+    都值得像功能一样认真设计一遍入口。
+  </div>
+
   <h2>上线状态</h2>
   <div class="tests">
     <div class="tr"><span class="ok">✓</span><span class="n">GitHub 仓库已公开</span><span class="r">hkkdling-sketch/shishi-diet</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">GitHub Pages 已开启，构建无错误</span><span class="r">HTTP 200</span></div>
-    <div class="tr"><span class="ok">✓</span><span class="n">全部资源在线可访问（含图标 / manifest / sw）</span><span class="r">字节精确匹配</span></div>
-    <div class="tr"><span class="ok">✓</span><span class="n">线上端到端实测：建档 → 入库 → 吃掉 → 记体重 → 看趋势</span><span class="r">全流程通过</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">全部资源在线可访问（含图标 / manifest / sw / guide / report）</span><span class="r">字节精确匹配</span></div>
+    <div class="tr"><span class="ok">✓</span><span class="n">线上端到端实测：建档 → 入库 → 吃掉 → 记训练 → 看缺口</span><span class="r">全流程通过</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">仓库 topics 已标注</span><span class="r">10 个</span></div>
     <div class="tr"><span class="ok">✓</span><span class="n">敏感信息审计（API Key / token / 私钥）</span><span class="r">0 泄露</span></div>
   </div>
@@ -430,6 +473,7 @@ pre{
   <p>按「公开发布型」准备，<strong>不需要私信或逐个联系任何人</strong>——发出去让人自己找过来。</p>
   <div class="tests">
     <div class="tr"><span class="ok">→</span><span class="n">一句话定位（中 / 英 / 日）：别的 App 记你吃了多少，识食算你还剩多少</span><span class="r">可复用</span></div>
+    <div class="tr"><span class="ok">→</span><span class="n">📱 手机上怎么用（上手指南页，8 节 + 10 条 FAQ，自带深色模式）</span><span class="r">已上线</span></div>
     <div class="tr"><span class="ok">→</span><span class="n">Product Hunt / Show HN / Reddit 发布文案（含「设计决策」版跟帖）</span><span class="r">已备好</span></div>
     <div class="tr"><span class="ok">→</span><span class="n">X / 小红书 短内容</span><span class="r">已备好</span></div>
     <div class="tr"><span class="ok">→</span><span class="n">竞品对比表（含「诚实的话」：数据库大小确实不如 MFP）</span><span class="r">已备好</span></div>
