@@ -4,6 +4,7 @@
   "description": "拍照识别食物营养、按库存记账、自动算热量与三大营养素目标的离线优先饮食管家。",
   "lang": "zh-CN",
   "dir": "ltr",
+  "id": "/shishi-diet/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
