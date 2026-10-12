@@ -147,6 +147,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .btn-g{background:var(--accent);color:#fff;width:100%}
 .btn-g:active{background:var(--accent-ink)}
 .btn-o{background:transparent;color:var(--accent);border:1px solid var(--accent);width:100%}
+/* 链接式按钮：外观同 .btn-g / .btn-o，但用于 <a>，保持可点击区域 */
+a.linkbtn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  box-sizing:border-box;width:100%;padding:12px 16px;border-radius:var(--r-md);
+  font-size:14.5px;font-weight:600;text-decoration:none;cursor:pointer;
+  transition:transform .1s,background .15s;
+}
+a.linkbtn:active{transform:scale(.975)}
+a.linkbtn.out{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+a.linkbtn.solid{background:var(--accent);color:#fff;border:1px solid var(--accent)}
 .btn-s{background:var(--surface-2);color:var(--ink);padding:9px 12px;font-size:13px;width:auto;border:1px solid var(--line)}
 .btn-r{background:var(--danger-soft);color:var(--danger);padding:9px 12px;font-size:13px;width:auto}
 .btnrow{display:flex;gap:8px}
@@ -727,6 +737,12 @@ nav button{font-size:10px;padding:8px 0 7px}
     </div>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
     <div class="hint" style="margin-top:12px"><span>手机浏览器打开 → 菜单「添加到主屏幕」，可像 App 一样离线使用。数据只存本机，换手机请先导出再导入。</span></div>
+  </div>
+
+  <div class="card">
+    <h3><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.6"/></svg>使用指南</h3>
+    <div class="hint" style="margin-bottom:12px"><span>第一次用不知从哪下手？这份指南讲清了「装到桌面 → 建档 → 入库 → 每天怎么记」，3 分钟看完。</span></div>
+    <a class="linkbtn out" href="https://hkkdling-sketch.github.io/shishi-diet/guide/" target="_blank" rel="noopener">打开上手指南</a>
   </div>
 </div>
 
