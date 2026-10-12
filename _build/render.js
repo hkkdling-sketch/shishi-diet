@@ -7,7 +7,7 @@ const OUT = path.join(__dirname, 'shots');
 fs.mkdirSync(OUT, { recursive: true });
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: require('path').join(__dirname,'ms-playwright','chromium-1234','chrome-win64','chrome.exe') });
+  const browser = await chromium.launch({ executablePath: 'C:/Users/25675/AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe' });
   const errors = [], warns = [];
 
   for (const scheme of ['light', 'dark']) {
@@ -87,6 +87,25 @@ fs.mkdirSync(OUT, { recursive: true });
     // ---- 交互：库存 ----
     await page.click('nav button[data-t="tab-stock"]');
     await page.waitForTimeout(250);
+    // 首屏应当已经能直接看到概览 / 提醒 / 缺口（不用滚动）
+    const firstScreen = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#stockBox > .card')].map(c => {
+        const r = c.getBoundingClientRect();
+        return { txt: c.querySelector('h3')?.textContent.trim().slice(0, 10) || c.textContent.trim().slice(0, 8),
+                 top: Math.round(r.top), bottom: Math.round(r.bottom) };
+      });
+      return { cards, navTop: Math.round(document.querySelector('nav').getBoundingClientRect().top) };
+    });
+    const aboveFold = firstScreen.cards.filter(c => c.bottom <= firstScreen.navTop);
+    console.log(`\n  [${scheme}] 首屏可见卡片: ${aboveFold.map(c => c.txt + `@${c.top}`).join(' | ') || '（无）'}`);
+    if (!aboveFold.some(c => c.txt.includes('库存总计'))) errors.push(`[${scheme}] 概览卡不在首屏`);
+    if (!aboveFold.some(c => c.txt.includes('今日还差'))) warns.push(`[${scheme}] 缺口分析卡不在首屏（建议压缩上方内容）`);
+
+    // 手动添加区默认折叠 —— 展开后再操作
+    const addHidden = await page.evaluate(() => !document.getElementById('q').offsetParent);
+    if (!addHidden) errors.push(`[${scheme}] 手动添加表单应当默认折叠`);
+    await page.click('#addBox > summary');
+    await page.waitForTimeout(200);
     await page.fill('#q', '鸡胸');
     await page.waitForTimeout(300);
     const sug = await page.evaluate(() => document.getElementById('sug').innerHTML.length);
