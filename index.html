@@ -673,22 +673,35 @@ nav button{font-size:10px;padding:8px 0 7px}
 <div class="tab" id="tab-scan">
   <details class="card" id="apiBox">
     <summary>识别接口设置<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></summary>
+    <div class="hint" style="margin-bottom:14px"><span>没有 Key 也能用：不配接口时，用内置 109 条食物库 + 手动输入照样能记账。<b>配了之后拍照自动填营养表，省事很多。</b></span></div>
     <div class="fld"><label>快速选择服务商</label>
       <select id="apiPreset" onchange="applyPreset()">
         <option value="">自定义</option>
         <option value="zhipu">智谱 GLM-4V-Flash（免费）</option>
         <option value="qwen">通义千问 Qwen-VL</option>
         <option value="openai">OpenAI GPT-4o-mini</option>
+        <option value="proxy">自建代理（不用填 Key）</option>
       </select>
     </div>
-    <div class="hint" style="margin:-4px 0 12px"><span>没有 Key？去 bigmodel.cn 注册创建 API Key，选「智谱」即可，目前有免费模型。</span></div>
-    <div class="fld"><label>API 地址（OpenAI 兼容 /chat/completions）</label><input id="apiBase" placeholder="https://api.openai.com/v1"></div>
+    <div class="hint" style="margin:-4px 0 12px"><span>没有 Key？去 <b>bigmodel.cn</b> 注册创建 API Key，选「智谱」即可，目前有免费模型。Key 只存本机，不会上传。</span></div>
+    <div class="fld"><label>API 地址（OpenAI 兼容 /chat/completions）</label><input id="apiBase" placeholder="https://open.bigmodel.cn/api/paas/v4"></div>
     <div class="grid2">
-      <div class="fld"><label>模型</label><input id="apiModel" placeholder="gpt-4o-mini"></div>
-      <div class="fld"><label>API Key</label><input id="apiKey" type="password" placeholder="sk-..."></div>
+      <div class="fld"><label>模型</label><input id="apiModel" placeholder="glm-4v-flash"></div>
+      <div class="fld"><label>API Key</label><input id="apiKey" type="password" placeholder="留空表示接口不需要 Key"></div>
     </div>
-    <button class="btn-o" onclick="saveApi()">保存设置</button>
-    <div class="hint" style="margin-top:8px"><span>支持 OpenAI 及任意兼容接口（智谱、通义千问等），必须选支持看图的模型。Key 只存本机，不会上传。</span></div>
+    <div class="btnrow">
+      <button class="btn-o" onclick="saveApi()">保存设置</button>
+      <button class="btn-s" id="apiTestBtn" onclick="testApi()">测试连接</button>
+    </div>
+    <div id="apiTest" style="margin-top:10px"></div>
+    <div class="hint" style="margin-top:10px"><span>支持 OpenAI 及任意兼容接口（智谱、通义千问等），必须选支持看图的模型。</span></div>
+    <details class="card" style="margin-top:12px;background:var(--surface-2);box-shadow:none">
+      <summary style="font-size:13px">不想每台设备都填一次 Key？<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></summary>
+      <div class="hint" style="margin-top:10px"><span>识食没有服务器，所以 Key 只能存在每台设备的浏览器里 —— 换设备就要重填。<br><br>
+        解法：把 Key 放到一个免费的小代理上（Cloudflare Worker），识食只填代理地址、<b>Key 留空</b>。<br>
+        <b>部署一次，所有设备永久免配置。</b><br><br>
+        代码和 5 分钟部署步骤在仓库的 <b><code>proxy/</code></b> 目录里。</span></div>
+    </details>
   </details>
 
   <div class="card">
@@ -2311,16 +2324,96 @@ function applyPreset(){
   const P={
     zhipu:["https://open.bigmodel.cn/api/paas/v4","glm-4v-flash"],
     qwen:["https://dashscope.aliyuncs.com/compatible-mode/v1","qwen-vl-plus"],
-    openai:["https://api.openai.com/v1","gpt-4o-mini"]
+    openai:["https://api.openai.com/v1","gpt-4o-mini"],
+    proxy:["","glm-4v-flash"],
   }[$("apiPreset").value];
   if(P){$("apiBase").value=P[0];$("apiModel").value=P[1]}
+  if($("apiPreset").value==="proxy"){
+    $("apiBase").focus();
+    toast("填你自建代理的地址，Key 留空");
+  }
+}
+/** 从 Key 的形态猜服务商，只在地址还空着的时候自动填 —— 不覆盖用户已经填好的 */
+function guessProvider(key){
+  const k=(key||"").trim();
+  if(!k)return null;
+  if(/^sk-/.test(k))return null;               // sk- 开头可能是 OpenAI 也可能是通义，不猜
+  if(/^[0-9a-f]{20,}\.[0-9A-Za-z]{8,}$/.test(k))return "zhipu";   // 智谱：id.secret
+  if(/^[0-9a-f]{32}$/i.test(k))return "zhipu";
+  return null;
+}
+/** Key 输入框失焦时，如果地址是空的，按 Key 形态自动补上服务商 */
+function onKeyBlur(){
+  const base=$("apiBase").value.trim();
+  if(base)return;                              // 用户已填地址，尊重他的选择
+  const p=guessProvider($("apiKey").value);
+  if(!p)return;
+  const P={zhipu:["https://open.bigmodel.cn/api/paas/v4","glm-4v-flash"]}[p];
+  if(!P)return;
+  $("apiBase").value=P[0];
+  if(!$("apiModel").value.trim())$("apiModel").value=P[1];
+  $("apiPreset").value=p;
+  toast("已自动识别为智谱，请核对");
 }
 function saveApi(){
-  S.api={base:$("apiBase").value.trim(),model:$("apiModel").value.trim(),key:$("apiKey").value.trim()};
-  save();toast("设置已保存");
+  const base=$("apiBase").value.trim().replace(/\/+$/,"");
+  if(!base){toast("请填 API 地址");return}
+  S.api={base,model:$("apiModel").value.trim()||"glm-4v-flash",key:$("apiKey").value.trim()};
+  save();toast(S.api.key?"设置已保存":"设置已保存（无 Key 模式）");
+  $("apiTest").innerHTML="";
+}
+/** 把各种网络错误翻译成人能看懂的话 */
+function apiErrorText(err,res){
+  const m=String(err&&err.message||err||"");
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m))
+    return "连不上这个地址。常见原因：① 地址写错（末尾不要加 /chat/completions）；② 接口不支持浏览器直连（CORS）；③ 网络不通。";
+  if(/401|403|Unauthorized|invalid.*key|api key/i.test(m))
+    return "Key 不对或没有权限。检查是否复制完整、有没有多余空格。";
+  if(/404/.test(m))return "地址或模型名不对（404）。确认 API 地址只写到 /v4 这一级。";
+  if(/429/.test(m))return "请求太频繁或额度用完了，等一会儿再试。";
+  return m;
+}
+/** 测试连接：用一张 1×1 的图片发一次最小请求，验证地址+模型+Key 三者都对 */
+async function testApi(){
+  // 不要用全局 event（只在浏览器事件派发时存在，且在严格模式下是 ReferenceError）
+  const btn=$("apiTestBtn");if(btn)btn.disabled=true;
+  const out=$("apiTest");
+  out.innerHTML=`<div class="hint"><span>测试中…</span></div>`;
+  const base=($("apiBase").value.trim()||"").replace(/\/+$/,"");
+  const model=$("apiModel").value.trim()||"glm-4v-flash";
+  const key=$("apiKey").value.trim();
+  if(!base){out.innerHTML=`<div class="hint" style="color:var(--danger)"><span>先填 API 地址</span></div>`;if(btn)btn.disabled=false;return}
+  // 1×1 透明 PNG：最小的合法图片，用来验证「这个模型确实能看图」
+  const px="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  const t0=Date.now();
+  try{
+    const res=await fetch(base+"/chat/completions",{
+      method:"POST",
+      headers:Object.assign({"Content-Type":"application/json"},
+        key?{"Authorization":"Bearer "+key}:{}),
+      body:JSON.stringify({model,messages:[
+        {role:"user",content:[{type:"text",text:"回复 OK 两个字即可"},{type:"image_url",image_url:{url:px}}]}]})
+    });
+    const txt=await res.text();
+    if(!res.ok){
+      let msg=txt.slice(0,160);
+      try{const j=JSON.parse(txt);msg=(j.error&&(j.error.message||j.error.code))||(j.message)||msg}catch(e){}
+      throw new Error("HTTP "+res.status+"："+msg);
+    }
+    let j;try{j=JSON.parse(txt)}catch(e){throw new Error("返回的不是 JSON："+txt.slice(0,80))}
+    const reply=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||"";
+    const ms=Date.now()-t0;
+    out.innerHTML=`<div class="hint" style="color:var(--accent)"><span>${ic("check",14)}连接正常（${ms} ms）· 模型 ${esc(model)} 能看图</span></div>
+      ${reply?`<div class="hint" style="margin-top:6px"><span>模型回复：${esc(String(reply).slice(0,60))}</span></div>`:""}`;
+  }catch(err){
+    out.innerHTML=`<div class="hint" style="color:var(--danger)"><span>${ic("alert",14)}${esc(apiErrorText(err))}</span></div>`;
+  }
+  if(btn)btn.disabled=false;
 }
 async function doScan(){
-  if(!S.api.key){toast("先填 API Key");$("apiBox").open=true;$("apiBox").scrollIntoView({behavior:"smooth"});return}
+  const base=(S.api.base||"").replace(/\/+$/,"");
+  const hasKey=!!(S.api.key||"").trim();
+  if(!base){toast("先填 API 地址");$("apiBox").open=true;$("apiBox").scrollIntoView({behavior:"smooth"});return}
   if(!curImgs.length){toast("先选一张图");return}
   const mode=$("scanMode").value;
   const sys=mode==="pack"
@@ -2334,9 +2427,11 @@ async function doScan(){
     const shrunk=await Promise.all(curImgs.map(s=>shrink(s)));
     const content=[{type:"text",text:n>1?`请综合这 ${n} 张图片进行识别`:"请识别这张图"}];
     shrunk.forEach(u=>content.push({type:"image_url",image_url:{url:u}}));
-    const res=await fetch(S.api.base.replace(/\/+$/,"")+"/chat/completions",{
+    const res=await fetch(base+"/chat/completions",{
       method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+S.api.key},
+      // 无 Key 模式（自建代理）时不带 Authorization 头，否则有些代理会拒绝
+      headers:Object.assign({"Content-Type":"application/json"},
+        hasKey?{"Authorization":"Bearer "+S.api.key}:{}),
       body:JSON.stringify({model:S.api.model,messages:[
         {role:"system",content:sys},
         {role:"user",content:content}]})
@@ -2356,7 +2451,7 @@ async function doScan(){
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功（用了 ${n} 张图），请核对数值</span>`;
     $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
-    $("scanMsg").innerHTML=`<span style="color:var(--danger)">${esc(err.message)}</span><br><span style="color:var(--ink-3)">若提示跨域/CORS，请换支持浏览器直连的接口</span>`;
+    $("scanMsg").innerHTML=`<span style="color:var(--danger)">${esc(apiErrorText(err))}</span><br><span style="color:var(--ink-3)">可在下方「识别接口设置」里点「测试连接」排查</span>`;
   }
   btn.disabled=false;
 }
@@ -3240,6 +3335,10 @@ function doReset(){localStorage.removeItem(KEY);location.reload()}
   });
   applyTheme();
   go("tab-today");   // 激活默认页（.tab 默认 display:none，必须走 go 才会显示）
+
+  // Key 粘贴完自动猜服务商（只在地址还空着时），少一步手动选择
+  const keyEl=$("apiKey");
+  if(keyEl)keyEl.addEventListener("blur",onKeyBlur);
 
   // 装到桌面：先按当前环境渲染一次，等浏览器抛出 beforeinstallprompt 再升级成「一键安装」
   renderInstall();
