@@ -190,7 +190,7 @@ Cloudflare Worker 里（`proxy/` 目录，含完整代码和 5 分钟部署步�
 | 项目 | 说明                                                           |
 | -- | ------------------------------------------------------------ |
 | 架构 | **单文件 PWA**，`index.html` 内联全部 CSS/JS，零运行时依赖                  |
-| 体积 | 约 180 KB（含 109 条食物数据 + 约 60 个内联 SVG 图标）                      |
+| 体积 | 186 KB（含 109 条食物数据 + 43 个内联 SVG 图标）                      |
 | 离线 | Service Worker `stale-while-revalidate`，秒开 + 后台静默更新          |
 | 安装 | 捕获 `beforeinstallprompt` 做**应用内一键安装**；iOS 走图文步骤降级         |
 | 图标 | **内联 SVG**，不是 emoji（emoji 在 iOS / Android / Windows 上渲染差异极大） |
@@ -263,7 +263,20 @@ Key 只存本机 `localStorage`，不会上传到任何地方。
 
 ## 开发与测试
 
-本项目带一套**零依赖**的自动化校验（只用 Python 标准库 + Node）：
+本项目带一套**零依赖**的自动化校验（只用 Python 标准库 + Node）。
+
+**一条命令跑全（推荐）：**
+
+```bash
+bash _build/test.sh          # 拼装 + 结构校验 + 9 个断言套件 + 元测试
+bash _build/test.sh --full   # 再加浏览器端到端（脚本会自己起本地服务）
+```
+
+> ⚠️ **不要手敲 `node _build/edge-*.js`** —— 那个 glob 会漏掉两个套件：
+> `edge3.js`（没有连字符）和 `test-worker.mjs`（不是 `.js`）。
+> `test.sh` 里是显式列表，一条不漏。
+
+**或逐个跑：**
 
 ```bash
 # 构建：把分段源文件拼回单文件（改完源文件必须跑）
@@ -294,7 +307,7 @@ node _build/edge-train.js
 # 安装层：安卓一键装 / iOS 降级 / 已装隐藏 / 关闭提示（47 条断言）
 node _build/edge-install.js
 
-# 新增字段 + 自适应 TDEE：限量目标、漏记剔除、反推数值、边界保护（63 条断言）
+# 新增字段 + 自适应 TDEE：限量目标、漏记剔除、反推数值、边界保护（64 条断言）
 node _build/edge-adapt.js
 
 # 接口配置：服务商猜测、错误提示翻译、无 Key 模式、连接测试（32 条断言）
