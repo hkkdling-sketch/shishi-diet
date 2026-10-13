@@ -49,6 +49,11 @@
   --d-fat:#c8873f;
   --d-carb:#7c5c9e;
   --d-fiber:#5c8a72;
+  /* 限量项配色（钠/饱和脂肪/糖）—— 与「目标项」区分开，但不用警告红，
+     因为「接近上限」是常态而非错误 */
+  --d-sodium:#5d7f9e;
+  --d-satfat:#8a7b52;
+  --d-sugar:#a06b7e;
   /* 间距与形状 */
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
   --track:#d5d1c7;
@@ -62,6 +67,7 @@
     --danger:#e0736a; --danger-soft:#2c1e1c;
     --warn:#d9a441; --warn-soft:#2b2418;
     --d-protein:#7fa3d4; --d-fat:#dcae72; --d-carb:#b096d4; --d-fiber:#8fc4a4;
+    --d-sodium:#8fb4d0; --d-satfat:#c2ae7e; --d-sugar:#d0a0b0;
     --track:#3c3a33;
   }
 }
@@ -188,6 +194,26 @@ a.linkbtn.solid{background:var(--accent);color:#fff;border:1px solid var(--accen
 .kh-foot b{color:var(--ink-2);font-weight:600}
 .kh-foot span{margin-left:auto}
 .kcalhero.over .kh-foot b{color:var(--warn)}
+
+/* ---------- 限量项（钠 / 饱和脂肪 / 糖）：条形朝上限填充 ---------- */
+.limlist{margin-top:2px}
+.limrow{padding:10px 0;border-bottom:1px solid var(--line)}
+.limrow:last-child{border-bottom:none;padding-bottom:0}
+.limrow .lh{display:flex;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:6px}
+.limrow .gl{color:var(--ink-2);font-weight:500;display:flex;align-items:center;gap:5px}
+.limrow .gl i{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.limrow .lh b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.limrow .lh b em{font-style:normal;font-weight:400;color:var(--ink-3);font-size:11.5px}
+.limrow .lbar{height:8px;background:var(--track);border-radius:4px;overflow:hidden}
+.limrow .lbar>i{display:block;height:100%;border-radius:4px;transition:width .55s cubic-bezier(.4,0,.2,1)}
+.limrow .lf{font-size:11.5px;color:var(--ink-3);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ---------- 自适应 TDEE 明细行 ---------- */
+.adaptrows{margin-top:4px;border-top:1px solid var(--line)}
+.adaptrows .ar{display:flex;align-items:baseline;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px}
+.adaptrows .ar span{color:var(--ink-2)}
+.adaptrows .ar b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
 
 /* ---------- 宏量营养素行 ---------- */
 .mac{display:grid;grid-template-columns:42px 1fr 92px;align-items:center;gap:10px;margin-top:12px;font-size:12.5px}
@@ -502,6 +528,11 @@ a{color:var(--accent)}
 .dual-v{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 .dual-v.hot{color:var(--accent)}
 .dual-arrow{text-align:center;color:var(--line-2);font-size:12px}
+/* 限量项分组：与目标项视觉上分开，且数字用中性色（不用 accent，避免像「要冲上去」） */
+.dual-sep{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;
+  background:var(--surface-2);padding:6px 12px;border-top:1px solid var(--line)}
+.dual-row.cap .dual-v{color:var(--ink-2)}
+.dual-row.cap .dual-v.hot{color:var(--ink-2)}
 
 /* ---------- 自定义项目列表 ---------- */
 .mylist{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)}
@@ -702,6 +733,9 @@ nav button{font-size:10px;padding:8px 0 7px}
         <div class="fld"><label>脂肪 g/100g</label><input id="rF" type="number" inputmode="decimal"></div>
         <div class="fld"><label>碳水 g/100g</label><input id="rC" type="number" inputmode="decimal"></div>
         <div class="fld"><label>膳食纤维 g/100g</label><input id="rFb" type="number" inputmode="decimal" placeholder="选填"></div>
+        <div class="fld"><label>钠 mg/100g</label><input id="rNa" type="number" inputmode="decimal" placeholder="选填"></div>
+        <div class="fld"><label>饱和脂肪 g/100g</label><input id="rSf" type="number" inputmode="decimal" placeholder="选填"></div>
+        <div class="fld"><label>糖 g/100g</label><input id="rSg" type="number" inputmode="decimal" placeholder="选填"></div>
         <div class="fld"><label>总克重 (g)</label><input id="rG" type="number" inputmode="decimal" placeholder="500"></div>
       </div>
       <button class="btn-g" onclick="aiToLog(false)">记入今日 · 并扣减库存</button>
@@ -725,6 +759,10 @@ nav button{font-size:10px;padding:8px 0 7px}
 <!-- ============ 我的 ============ -->
 <div class="tab" id="tab-me">
   <div id="instBoxMe"></div>
+  <div class="card" id="adaptCard">
+    <h3><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3.5-4 3 2.4L19 8"/><circle cx="19" cy="8" r="1.4" fill="currentColor"/></svg>自适应消耗<span class="count">实验</span></h3>
+    <div id="adaptBox"></div>
+  </div>
   <div class="card">
     <h3><svg class="ic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>我的身体数据</h3>
     <div class="grid2">
@@ -822,62 +860,62 @@ nav button{font-size:10px;padding:8px 0 7px}
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
 const FOODS=[
-{n:"鸡胸肉(生)",k:133,p:19.4,f:5.0,c:2.5,fb:0,cat:"protein"},{n:"鸡蛋(全蛋)",k:144,p:13.3,f:8.8,c:2.8,fb:0,cat:"protein"},
-{n:"鸡蛋白",k:60,p:11.6,f:0.1,c:3.1,fb:0,cat:"protein"},{n:"鸡蛋黄",k:328,p:15.2,f:28.2,c:3.4,fb:0,cat:"protein"},
-{n:"鸡腿肉(生)",k:181,p:16.0,f:13.0,c:0,fb:0,cat:"protein"},{n:"鸡翅(生)",k:194,p:17.4,f:14.1,c:0,fb:0,cat:"protein"},
-{n:"牛肉(瘦,生)",k:106,p:20.2,f:2.3,c:1.2,fb:0,cat:"protein"},{n:"牛里脊(生)",k:107,p:22.2,f:0.9,c:2.4,fb:0,cat:"protein"},
-{n:"猪肉(里脊,生)",k:155,p:20.2,f:7.9,c:0.7,fb:0,cat:"protein"},{n:"猪瘦肉(生)",k:143,p:20.3,f:6.2,c:1.5,fb:0,cat:"protein"},
-{n:"三文鱼(生)",k:139,p:17.2,f:7.8,c:0,fb:0,cat:"protein"},{n:"鳕鱼(生)",k:88,p:20.4,f:0.5,c:0.5,fb:0,cat:"protein"},
-{n:"基围虾(生)",k:93,p:18.6,f:0.8,c:2.8,fb:0,cat:"protein"},{n:"金枪鱼(水浸罐头)",k:99,p:23.6,f:0.6,c:0,fb:0,cat:"protein"},
-{n:"猪肝(生)",k:129,p:19.3,f:3.5,c:5.0,fb:0,cat:"protein"},
-{n:"牛奶(全脂)",k:54,p:3.0,f:3.2,c:3.4,fb:0,cat:"protein"},{n:"酸奶(无糖)",k:70,p:3.5,f:2.5,c:9.0,fb:0,cat:"protein"},
-{n:"豆浆(无糖)",k:31,p:2.9,f:1.6,c:1.1,fb:1.1,cat:"protein"},{n:"豆腐(北)",k:98,p:12.2,f:4.8,c:2.0,fb:0.5,cat:"protein"},
-{n:"豆腐(嫩/南)",k:57,p:6.2,f:2.5,c:2.4,fb:0.4,cat:"protein"},{n:"豆腐干",k:140,p:16.2,f:3.6,c:10.7,fb:0.8,cat:"protein"},
-{n:"千张(百叶)",k:262,p:24.5,f:16.0,c:5.5,fb:1.0,cat:"protein"},{n:"内酯豆腐",k:49,p:5.0,f:1.9,c:3.3,fb:0.4,cat:"protein"},
-{n:"毛豆(鲜)",k:131,p:13.1,f:5.0,c:10.5,fb:4.0,cat:"protein"},{n:"黄豆(干)",k:390,p:35.0,f:16.0,c:34.2,fb:15.5,cat:"protein"},
-{n:"鹰嘴豆(熟)",k:164,p:8.9,f:2.6,c:27.4,fb:7.6,cat:"protein"},{n:"扁豆(熟)",k:116,p:9.0,f:0.4,c:20.1,fb:7.9,cat:"protein"},
-{n:"希腊酸奶(无糖)",k:59,p:10.0,f:0.4,c:3.6,fb:0,cat:"protein"},{n:"低脂奶酪",k:98,p:11.1,f:3.3,c:3.4,fb:0,cat:"protein"},
-{n:"米饭(熟)",k:116,p:2.6,f:0.3,c:25.9,fb:0.3,cat:"staple"},{n:"糙米饭(熟)",k:116,p:2.7,f:0.9,c:24.0,fb:1.6,cat:"staple"},
-{n:"馒头",k:223,p:7.0,f:1.1,c:47.0,fb:1.3,cat:"staple"},{n:"面条(熟)",k:110,p:2.7,f:0.2,c:24.3,fb:0.8,cat:"staple"},
-{n:"荞麦面(干)",k:340,p:12.0,f:1.5,c:68.0,fb:5.5,cat:"staple"},{n:"全麦面包",k:246,p:8.5,f:1.0,c:44.4,fb:6.0,cat:"staple"},
-{n:"白面包/吐司",k:264,p:8.3,f:3.2,c:48.6,fb:2.5,cat:"staple"},{n:"燕麦片(干)",k:377,p:12.1,f:6.7,c:61.6,fb:10.6,cat:"staple"},
-{n:"红薯/紫薯(生)",k:86,p:1.1,f:0.2,c:20.1,fb:1.6,cat:"staple"},{n:"玉米(鲜)",k:112,p:4.0,f:1.2,c:22.8,fb:2.9,cat:"staple"},
-{n:"土豆(生)",k:77,p:2.0,f:0.2,c:17.5,fb:1.1,cat:"staple"},{n:"山药(生)",k:57,p:1.9,f:0.2,c:12.4,fb:0.8,cat:"staple"},
-{n:"藜麦(熟)",k:120,p:4.4,f:1.9,c:21.3,fb:2.8,cat:"staple"},{n:"意面(熟)",k:158,p:5.8,f:0.9,c:30.9,fb:1.8,cat:"staple"},
-{n:"紫米/黑米(熟)",k:126,p:3.0,f:0.8,c:27.0,fb:2.0,cat:"staple"},{n:"玉米面(干)",k:350,p:8.1,f:3.3,c:73.5,fb:6.2,cat:"staple"},
-{n:"彩椒/甜椒",k:26,p:1.0,f:0.3,c:5.4,fb:1.7,cat:"veg"},{n:"西兰花",k:36,p:4.1,f:0.6,c:4.3,fb:2.6,cat:"veg"},
-{n:"菠菜",k:28,p:2.6,f:0.3,c:4.5,fb:2.2,cat:"veg"},{n:"生菜",k:16,p:1.4,f:0.4,c:2.1,fb:1.3,cat:"veg"},
-{n:"黄瓜",k:16,p:0.8,f:0.2,c:2.9,fb:0.5,cat:"veg"},{n:"西红柿",k:20,p:0.9,f:0.2,c:4.0,fb:1.2,cat:"veg"},
-{n:"胡萝卜",k:39,p:1.0,f:0.2,c:9.0,fb:2.8,cat:"veg"},{n:"洋葱",k:40,p:1.1,f:0.2,c:9.0,fb:1.7,cat:"veg"},
-{n:"大白菜",k:18,p:1.5,f:0.1,c:3.2,fb:1.0,cat:"veg"},{n:"冬瓜",k:12,p:0.4,f:0.2,c:2.6,fb:0.7,cat:"veg"},
-{n:"茄子",k:23,p:1.1,f:0.2,c:5.4,fb:3.0,cat:"veg"},{n:"芹菜(茎)",k:17,p:0.8,f:0.1,c:3.9,fb:1.6,cat:"veg"},
-{n:"芦笋",k:22,p:2.2,f:0.1,c:4.3,fb:2.1,cat:"veg"},{n:"秋葵",k:37,p:2.5,f:0.1,c:8.7,fb:3.2,cat:"veg"},
-{n:"蘑菇(鲜)",k:24,p:2.7,f:0.1,c:4.1,fb:2.1,cat:"veg"},{n:"金针菇(鲜)",k:32,p:2.4,f:0.4,c:6.0,fb:2.7,cat:"veg"},
-{n:"海带(鲜)",k:13,p:1.2,f:0.1,c:2.1,fb:1.3,cat:"veg"},{n:"豆芽(绿豆芽)",k:18,p:2.1,f:0.1,c:2.9,fb:0.8,cat:"veg"},
-{n:"西葫芦",k:19,p:1.2,f:0.2,c:4.2,fb:1.0,cat:"veg"},{n:"南瓜",k:23,p:0.7,f:0.1,c:5.3,fb:0.8,cat:"veg"},
-{n:"韭菜",k:29,p:2.4,f:0.4,c:4.6,fb:1.4,cat:"veg"},{n:"青椒(尖椒)",k:27,p:1.4,f:0.3,c:5.8,fb:2.1,cat:"veg"},
-{n:"苦瓜",k:19,p:1.0,f:0.1,c:4.9,fb:1.4,cat:"veg"},{n:"空心菜",k:20,p:2.2,f:0.3,c:3.6,fb:1.4,cat:"veg"},
-{n:"油麦菜",k:15,p:1.4,f:0.4,c:2.1,fb:1.2,cat:"veg"},{n:"菜花/花椰菜",k:24,p:2.1,f:0.2,c:4.6,fb:2.7,cat:"veg"},
-{n:"莲藕(生)",k:73,p:1.9,f:0.2,c:16.4,fb:2.2,cat:"veg"},{n:"娃娃菜",k:13,p:1.9,f:0.2,c:2.4,fb:1.0,cat:"veg"},
-{n:"苹果",k:53,p:0.2,f:0.2,c:13.7,fb:1.2,cat:"fruit"},{n:"香蕉",k:93,p:1.4,f:0.2,c:22.0,fb:1.2,cat:"fruit"},
-{n:"橙子",k:48,p:0.8,f:0.2,c:11.1,fb:0.6,cat:"fruit"},{n:"蓝莓",k:57,p:0.7,f:0.3,c:14.5,fb:2.4,cat:"fruit"},
-{n:"猕猴桃",k:61,p:0.8,f:0.6,c:14.5,fb:2.6,cat:"fruit"},{n:"西瓜",k:31,p:0.5,f:0.2,c:7.5,fb:0.3,cat:"fruit"},
-{n:"草莓",k:32,p:1.0,f:0.2,c:7.7,fb:1.1,cat:"fruit"},{n:"葡萄",k:45,p:0.5,f:0.2,c:10.3,fb:0.4,cat:"fruit"},
-{n:"火龙果",k:55,p:1.1,f:0.2,c:13.3,fb:2.0,cat:"fruit"},{n:"牛油果",k:171,p:2.0,f:15.3,c:8.6,fb:2.1,cat:"fruit"},
-{n:"柚子",k:42,p:0.8,f:0.2,c:9.5,fb:0.4,cat:"fruit"},{n:"桃子",k:48,p:0.9,f:0.1,c:12.2,fb:1.3,cat:"fruit"},
-{n:"樱桃",k:46,p:1.1,f:0.2,c:10.2,fb:0.3,cat:"fruit"},{n:"梨",k:51,p:0.3,f:0.1,c:13.3,fb:3.1,cat:"fruit"},
-{n:"火龙果(红心)",k:51,p:1.0,f:0.2,c:13.3,fb:1.6,cat:"fruit"},{n:"芒果",k:35,p:0.6,f:0.2,c:8.3,fb:1.3,cat:"fruit"},
-{n:"树莓",k:52,p:1.2,f:0.7,c:11.9,fb:6.5,cat:"fruit"},{n:"圣女果",k:22,p:0.9,f:0.2,c:4.9,fb:1.8,cat:"fruit"},
-{n:"花生(炒)",k:581,p:24.1,f:50.6,c:21.2,fb:7.7,cat:"fat"},{n:"杏仁",k:578,p:22.5,f:45.4,c:21.7,fb:11.8,cat:"fat"},
-{n:"核桃",k:646,p:14.9,f:58.8,c:19.1,fb:9.5,cat:"fat"},{n:"腰果",k:553,p:18.0,f:44.0,c:30.0,fb:3.6,cat:"fat"},
-{n:"花生酱(无糖)",k:600,p:25.0,f:50.0,c:20.0,fb:6.0,cat:"fat"},{n:"橄榄油",k:899,p:0,f:99.9,c:0,fb:0,cat:"fat"},
-{n:"花生油",k:899,p:0,f:99.9,c:0,fb:0,cat:"fat"},
-{n:"奇亚籽",k:486,p:16.5,f:30.7,c:42.1,fb:34.4,cat:"fat"},{n:"亚麻籽",k:534,p:18.3,f:42.2,c:28.9,fb:27.3,cat:"fat"},
-{n:"南瓜子",k:559,p:30.2,f:49.0,c:10.7,fb:6.0,cat:"fat"},{n:"葵花籽",k:584,p:20.8,f:51.5,c:20.0,fb:8.6,cat:"fat"},
-{n:"蜂蜜",k:321,p:0.3,f:1.9,c:82.4,fb:0,cat:"other"},{n:"乳清蛋白粉",k:375,p:75.0,f:5.0,c:8.0,fb:0,cat:"other"},
-{n:"黑巧克力(70%)",k:550,p:7.0,f:40.0,c:45.0,fb:11.0,cat:"other"},{n:"火腿肠",k:212,p:11.3,f:17.0,c:5.0,fb:0,cat:"other"},
-{n:"鸡胸肉肠(低脂)",k:120,p:20.0,f:3.0,c:4.0,fb:0,cat:"other"},
-{n:"木耳(干)",k:265,p:12.1,f:1.5,c:65.6,fb:29.9,cat:"other"},{n:"魔芋/蒟蒻",k:12,p:0.1,f:0.1,c:3.0,fb:3.0,cat:"other"}
+{n:"鸡胸肉(生)",k:133,p:19.4,f:5.0,c:2.5,fb:0,na:63,sf:1.4,sg:0,cat:"protein"},{n:"鸡蛋(全蛋)",k:144,p:13.3,f:8.8,c:2.8,fb:0,na:131,sf:3.0,sg:0.3,cat:"protein"},
+{n:"鸡蛋白",k:60,p:11.6,f:0.1,c:3.1,fb:0,na:166,sf:0,sg:0.3,cat:"protein"},{n:"鸡蛋黄",k:328,p:15.2,f:28.2,c:3.4,fb:0,na:54,sf:8.0,sg:0.5,cat:"protein"},
+{n:"鸡腿肉(生)",k:181,p:16.0,f:13.0,c:0,fb:0,na:85,sf:3.6,sg:0,cat:"protein"},{n:"鸡翅(生)",k:194,p:17.4,f:14.1,c:0,fb:0,na:85,sf:4.0,sg:0,cat:"protein"},
+{n:"牛肉(瘦,生)",k:106,p:20.2,f:2.3,c:1.2,fb:0,na:53,sf:1.0,sg:0,cat:"protein"},{n:"牛里脊(生)",k:107,p:22.2,f:0.9,c:2.4,fb:0,na:45,sf:0.3,sg:0,cat:"protein"},
+{n:"猪肉(里脊,生)",k:155,p:20.2,f:7.9,c:0.7,fb:0,na:43,sf:2.9,sg:0,cat:"protein"},{n:"猪瘦肉(生)",k:143,p:20.3,f:6.2,c:1.5,fb:0,na:58,sf:2.2,sg:0,cat:"protein"},
+{n:"三文鱼(生)",k:139,p:17.2,f:7.8,c:0,fb:0,na:59,sf:1.5,sg:0,cat:"protein"},{n:"鳕鱼(生)",k:88,p:20.4,f:0.5,c:0.5,fb:0,na:130,sf:0.1,sg:0,cat:"protein"},
+{n:"基围虾(生)",k:93,p:18.6,f:0.8,c:2.8,fb:0,na:165,sf:0.2,sg:0,cat:"protein"},{n:"金枪鱼(水浸罐头)",k:99,p:23.6,f:0.6,c:0,fb:0,na:320,sf:0.2,sg:0,cat:"protein"},
+{n:"猪肝(生)",k:129,p:19.3,f:3.5,c:5.0,fb:0,na:68,sf:1.2,sg:0,cat:"protein"},
+{n:"牛奶(全脂)",k:54,p:3.0,f:3.2,c:3.4,fb:0,na:44,sf:1.9,sg:3.4,cat:"protein"},{n:"酸奶(无糖)",k:70,p:3.5,f:2.5,c:9.0,fb:0,na:48,sf:1.6,sg:4.5,cat:"protein"},
+{n:"豆浆(无糖)",k:31,p:2.9,f:1.6,c:1.1,fb:1.1,na:3,sf:0.2,sg:0.5,cat:"protein"},{n:"豆腐(北)",k:98,p:12.2,f:4.8,c:2.0,fb:0.5,na:7,sf:0.7,sg:0.5,cat:"protein"},
+{n:"豆腐(嫩/南)",k:57,p:6.2,f:2.5,c:2.4,fb:0.4,na:7,sf:0.4,sg:0.5,cat:"protein"},{n:"豆腐干",k:140,p:16.2,f:3.6,c:10.7,fb:0.8,na:330,sf:0.5,sg:0.6,cat:"protein"},
+{n:"千张(百叶)",k:262,p:24.5,f:16.0,c:5.5,fb:1.0,na:30,sf:2.3,sg:0.5,cat:"protein"},{n:"内酯豆腐",k:49,p:5.0,f:1.9,c:3.3,fb:0.4,na:5,sf:0.3,sg:0.5,cat:"protein"},
+{n:"毛豆(鲜)",k:131,p:13.1,f:5.0,c:10.5,fb:4.0,na:4,sf:0.9,sg:2.0,cat:"protein"},{n:"黄豆(干)",k:390,p:35.0,f:16.0,c:34.2,fb:15.5,na:2,sf:2.3,sg:7.0,cat:"protein"},
+{n:"鹰嘴豆(熟)",k:164,p:8.9,f:2.6,c:27.4,fb:7.6,na:7,sf:0.3,sg:4.8,cat:"protein"},{n:"扁豆(熟)",k:116,p:9.0,f:0.4,c:20.1,fb:7.9,na:2,sf:0.1,sg:1.8,cat:"protein"},
+{n:"希腊酸奶(无糖)",k:59,p:10.0,f:0.4,c:3.6,fb:0,na:36,sf:0.1,sg:3.2,cat:"protein"},{n:"低脂奶酪",k:98,p:11.1,f:3.3,c:3.4,fb:0,na:400,sf:2.1,sg:2.5,cat:"protein"},
+{n:"米饭(熟)",k:116,p:2.6,f:0.3,c:25.9,fb:0.3,na:2,sf:0.1,sg:0.1,cat:"staple"},{n:"糙米饭(熟)",k:116,p:2.7,f:0.9,c:24.0,fb:1.6,na:3,sf:0.2,sg:0.2,cat:"staple"},
+{n:"馒头",k:223,p:7.0,f:1.1,c:47.0,fb:1.3,na:165,sf:0.3,sg:1.5,cat:"staple"},{n:"面条(熟)",k:110,p:2.7,f:0.2,c:24.3,fb:0.8,na:4,sf:0.1,sg:0.3,cat:"staple"},
+{n:"荞麦面(干)",k:340,p:12.0,f:1.5,c:68.0,fb:5.5,na:5,sf:0.3,sg:1.0,cat:"staple"},{n:"全麦面包",k:246,p:8.5,f:1.0,c:44.4,fb:6.0,na:450,sf:0.2,sg:5.0,cat:"staple"},
+{n:"白面包/吐司",k:264,p:8.3,f:3.2,c:48.6,fb:2.5,na:480,sf:0.7,sg:6.0,cat:"staple"},{n:"燕麦片(干)",k:377,p:12.1,f:6.7,c:61.6,fb:10.6,na:4,sf:1.2,sg:1.0,cat:"staple"},
+{n:"红薯/紫薯(生)",k:86,p:1.1,f:0.2,c:20.1,fb:1.6,na:28,sf:0.1,sg:5.0,cat:"staple"},{n:"玉米(鲜)",k:112,p:4.0,f:1.2,c:22.8,fb:2.9,na:3,sf:0.2,sg:3.0,cat:"staple"},
+{n:"土豆(生)",k:77,p:2.0,f:0.2,c:17.5,fb:1.1,na:6,sf:0.1,sg:0.8,cat:"staple"},{n:"山药(生)",k:57,p:1.9,f:0.2,c:12.4,fb:0.8,na:18,sf:0.1,sg:0.5,cat:"staple"},
+{n:"藜麦(熟)",k:120,p:4.4,f:1.9,c:21.3,fb:2.8,na:7,sf:0.2,sg:0.9,cat:"staple"},{n:"意面(熟)",k:158,p:5.8,f:0.9,c:30.9,fb:1.8,na:5,sf:0.2,sg:0.6,cat:"staple"},
+{n:"紫米/黑米(熟)",k:126,p:3.0,f:0.8,c:27.0,fb:2.0,na:3,sf:0.2,sg:0.3,cat:"staple"},{n:"玉米面(干)",k:350,p:8.1,f:3.3,c:73.5,fb:6.2,na:2,sf:0.5,sg:0.5,cat:"staple"},
+{n:"彩椒/甜椒",k:26,p:1.0,f:0.3,c:5.4,fb:1.7,na:3,sf:0,sg:3.0,cat:"veg"},{n:"西兰花",k:36,p:4.1,f:0.6,c:4.3,fb:2.6,na:19,sf:0.1,sg:1.7,cat:"veg"},
+{n:"菠菜",k:28,p:2.6,f:0.3,c:4.5,fb:2.2,na:85,sf:0.1,sg:0.4,cat:"veg"},{n:"生菜",k:16,p:1.4,f:0.4,c:2.1,fb:1.3,na:32,sf:0.1,sg:0.8,cat:"veg"},
+{n:"黄瓜",k:16,p:0.8,f:0.2,c:2.9,fb:0.5,na:5,sf:0,sg:1.6,cat:"veg"},{n:"西红柿",k:20,p:0.9,f:0.2,c:4.0,fb:1.2,na:5,sf:0,sg:2.6,cat:"veg"},
+{n:"胡萝卜",k:39,p:1.0,f:0.2,c:9.0,fb:2.8,na:71,sf:0,sg:4.7,cat:"veg"},{n:"洋葱",k:40,p:1.1,f:0.2,c:9.0,fb:1.7,na:4,sf:0,sg:4.2,cat:"veg"},
+{n:"大白菜",k:18,p:1.5,f:0.1,c:3.2,fb:1.0,na:57,sf:0,sg:1.2,cat:"veg"},{n:"冬瓜",k:12,p:0.4,f:0.2,c:2.6,fb:0.7,na:2,sf:0,sg:1.4,cat:"veg"},
+{n:"茄子",k:23,p:1.1,f:0.2,c:5.4,fb:3.0,na:6,sf:0,sg:3.0,cat:"veg"},{n:"芹菜(茎)",k:17,p:0.8,f:0.1,c:3.9,fb:1.6,na:159,sf:0,sg:1.3,cat:"veg"},
+{n:"芦笋",k:22,p:2.2,f:0.1,c:4.3,fb:2.1,na:3,sf:0,sg:1.3,cat:"veg"},{n:"秋葵",k:37,p:2.5,f:0.1,c:8.7,fb:3.2,na:8,sf:0,sg:1.5,cat:"veg"},
+{n:"蘑菇(鲜)",k:24,p:2.7,f:0.1,c:4.1,fb:2.1,na:8,sf:0,sg:2.0,cat:"veg"},{n:"金针菇(鲜)",k:32,p:2.4,f:0.4,c:6.0,fb:2.7,na:4,sf:0,sg:2.0,cat:"veg"},
+{n:"海带(鲜)",k:13,p:1.2,f:0.1,c:2.1,fb:1.3,na:107,sf:0,sg:0.6,cat:"veg"},{n:"豆芽(绿豆芽)",k:18,p:2.1,f:0.1,c:2.9,fb:0.8,na:5,sf:0,sg:1.0,cat:"veg"},
+{n:"西葫芦",k:19,p:1.2,f:0.2,c:4.2,fb:1.0,na:5,sf:0,sg:2.5,cat:"veg"},{n:"南瓜",k:23,p:0.7,f:0.1,c:5.3,fb:0.8,na:1,sf:0,sg:2.8,cat:"veg"},
+{n:"韭菜",k:29,p:2.4,f:0.4,c:4.6,fb:1.4,na:8,sf:0,sg:1.5,cat:"veg"},{n:"青椒(尖椒)",k:27,p:1.4,f:0.3,c:5.8,fb:2.1,na:3,sf:0,sg:3.0,cat:"veg"},
+{n:"苦瓜",k:19,p:1.0,f:0.1,c:4.9,fb:1.4,na:2,sf:0,sg:2.0,cat:"veg"},{n:"空心菜",k:20,p:2.2,f:0.3,c:3.6,fb:1.4,na:94,sf:0,sg:1.0,cat:"veg"},
+{n:"油麦菜",k:15,p:1.4,f:0.4,c:2.1,fb:1.2,na:80,sf:0,sg:1.0,cat:"veg"},{n:"菜花/花椰菜",k:24,p:2.1,f:0.2,c:4.6,fb:2.7,na:32,sf:0.1,sg:1.9,cat:"veg"},
+{n:"莲藕(生)",k:73,p:1.9,f:0.2,c:16.4,fb:2.2,na:44,sf:0,sg:1.5,cat:"veg"},{n:"娃娃菜",k:13,p:1.9,f:0.2,c:2.4,fb:1.0,na:50,sf:0,sg:1.0,cat:"veg"},
+{n:"苹果",k:53,p:0.2,f:0.2,c:13.7,fb:1.2,na:1.6,sf:0,sg:10.4,cat:"fruit"},{n:"香蕉",k:93,p:1.4,f:0.2,c:22.0,fb:1.2,na:1,sf:0.1,sg:12.2,cat:"fruit"},
+{n:"橙子",k:48,p:0.8,f:0.2,c:11.1,fb:0.6,na:1,sf:0,sg:9.4,cat:"fruit"},{n:"蓝莓",k:57,p:0.7,f:0.3,c:14.5,fb:2.4,na:1,sf:0,sg:10.0,cat:"fruit"},
+{n:"猕猴桃",k:61,p:0.8,f:0.6,c:14.5,fb:2.6,na:10,sf:0,sg:9.0,cat:"fruit"},{n:"西瓜",k:31,p:0.5,f:0.2,c:7.5,fb:0.3,na:3,sf:0,sg:6.2,cat:"fruit"},
+{n:"草莓",k:32,p:1.0,f:0.2,c:7.7,fb:1.1,na:4,sf:0,sg:4.9,cat:"fruit"},{n:"葡萄",k:45,p:0.5,f:0.2,c:10.3,fb:0.4,na:1.3,sf:0,sg:9.5,cat:"fruit"},
+{n:"火龙果",k:55,p:1.1,f:0.2,c:13.3,fb:2.0,na:3,sf:0,sg:9.0,cat:"fruit"},{n:"牛油果",k:171,p:2.0,f:15.3,c:8.6,fb:2.1,na:7,sf:2.1,sg:0.7,cat:"fruit"},
+{n:"柚子",k:42,p:0.8,f:0.2,c:9.5,fb:0.4,na:3,sf:0,sg:7.0,cat:"fruit"},{n:"桃子",k:48,p:0.9,f:0.1,c:12.2,fb:1.3,na:6,sf:0,sg:9.5,cat:"fruit"},
+{n:"樱桃",k:46,p:1.1,f:0.2,c:10.2,fb:0.3,na:8,sf:0,sg:8.5,cat:"fruit"},{n:"梨",k:51,p:0.3,f:0.1,c:13.3,fb:3.1,na:2,sf:0,sg:9.8,cat:"fruit"},
+{n:"火龙果(红心)",k:51,p:1.0,f:0.2,c:13.3,fb:1.6,na:3,sf:0,sg:9.5,cat:"fruit"},{n:"芒果",k:35,p:0.6,f:0.2,c:8.3,fb:1.3,na:2,sf:0,sg:6.5,cat:"fruit"},
+{n:"树莓",k:52,p:1.2,f:0.7,c:11.9,fb:6.5,na:1,sf:0,sg:4.4,cat:"fruit"},{n:"圣女果",k:22,p:0.9,f:0.2,c:4.9,fb:1.8,na:5,sf:0,sg:3.5,cat:"fruit"},
+{n:"花生(炒)",k:581,p:24.1,f:50.6,c:21.2,fb:7.7,na:4,sf:7.0,sg:4.0,cat:"fat"},{n:"杏仁",k:578,p:22.5,f:45.4,c:21.7,fb:11.8,na:1,sf:3.9,sg:4.4,cat:"fat"},
+{n:"核桃",k:646,p:14.9,f:58.8,c:19.1,fb:9.5,na:2,sf:5.5,sg:2.6,cat:"fat"},{n:"腰果",k:553,p:18.0,f:44.0,c:30.0,fb:3.6,na:12,sf:7.8,sg:5.9,cat:"fat"},
+{n:"花生酱(无糖)",k:600,p:25.0,f:50.0,c:20.0,fb:6.0,na:17,sf:10.0,sg:9.0,cat:"fat"},{n:"橄榄油",k:899,p:0,f:99.9,c:0,fb:0,na:0,sf:14.0,sg:0,cat:"fat"},
+{n:"花生油",k:899,p:0,f:99.9,c:0,fb:0,na:0,sf:17.0,sg:0,cat:"fat"},
+{n:"奇亚籽",k:486,p:16.5,f:30.7,c:42.1,fb:34.4,na:16,sf:3.3,sg:0,cat:"fat"},{n:"亚麻籽",k:534,p:18.3,f:42.2,c:28.9,fb:27.3,na:30,sf:3.7,sg:1.6,cat:"fat"},
+{n:"南瓜子",k:559,p:30.2,f:49.0,c:10.7,fb:6.0,na:7,sf:8.7,sg:1.4,cat:"fat"},{n:"葵花籽",k:584,p:20.8,f:51.5,c:20.0,fb:8.6,na:9,sf:4.5,sg:2.6,cat:"fat"},
+{n:"蜂蜜",k:321,p:0.3,f:1.9,c:82.4,fb:0,na:4,sf:0,sg:82.0,cat:"other"},{n:"乳清蛋白粉",k:375,p:75.0,f:5.0,c:8.0,fb:0,na:300,sf:2.0,sg:3.0,cat:"other"},
+{n:"黑巧克力(70%)",k:550,p:7.0,f:40.0,c:45.0,fb:11.0,na:20,sf:24.0,sg:24.0,cat:"other"},{n:"火腿肠",k:212,p:11.3,f:17.0,c:5.0,fb:0,na:1000,sf:6.0,sg:2.0,cat:"other"},
+{n:"鸡胸肉肠(低脂)",k:120,p:20.0,f:3.0,c:4.0,fb:0,na:800,sf:1.0,sg:1.5,cat:"other"},
+{n:"木耳(干)",k:265,p:12.1,f:1.5,c:65.6,fb:29.9,na:48,sf:0.2,sg:0.5,cat:"other"},{n:"魔芋/蒟蒻",k:12,p:0.1,f:0.1,c:3.0,fb:3.0,na:4,sf:0,sg:0.2,cat:"other"}
 ];
 const CAT_LABEL={protein:"蛋白质类",staple:"主食",veg:"蔬菜",fruit:"水果",fat:"油脂坚果",other:"其他"};
 const CAT_ORDER=["protein","staple","veg","fruit","fat","other"];
@@ -980,10 +1018,11 @@ function load(){
     o.myEx=o.myEx||[];                   // 用户自定义运动项目
     o.restKcal=o.restKcal||0;            // 休息日目标调整（kcal，可为负）
     if(typeof o.hideInstall!=="boolean")o.hideInstall=false;   // 是否关掉了首页的「装到桌面」提示
+    if(typeof o.useAdaptive!=="boolean")o.useAdaptive=false;   // 是否用自适应 TDEE 替代公式估算
     return o;
   }}catch(e){}
   return {profile:null,inv:[],log:{},ex:{},wt:{},plan:{},myEx:[],restKcal:0,
-          bestStreak:0,hideInstall:false,
+          bestStreak:0,hideInstall:false,useAdaptive:false,
           api:{base:"https://open.bigmodel.cn/api/paas/v4",model:"glm-4v-flash",key:""},theme:""};
 }
 function save(){try{norm();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("存储空间不足")}}
@@ -1220,12 +1259,120 @@ function fiberTarget(p, trainDay){
 /** 按训练强度给的碳水 g/kg */
 const CARB_PK={rest:3.5,low:4.0,mid:5.0,high:6.5};
 
+/* ================= 日期工具 ================= */
+function dOf(s){return new Date(s+"T00:00:00")}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function dayDiff(a,b){return Math.round((dOf(a)-dOf(b))/86400000)}
+function dayBefore(s,i){const d=dOf(s);d.setDate(d.getDate()-i);return ymd(d)}
+function dayRange(endDay,n){const a=[];for(let i=n-1;i>=0;i--)a.push(dayBefore(endDay,i));return a}
+
+/* ================= 自适应 TDEE =================
+
+   原理就是能量守恒：
+       摄入 − 消耗 = 身体储存的能量变化
+   →  TDEE = 日均摄入 − 日均储存变化
+   储存变化 = 趋势体重变化率(kg/天) × 7700 kcal/kg
+     （7700 是「脂肪 9400 / 瘦体重 1800」的常用混合近似）
+
+   为什么比公式准：Mifflin-St Jeor 是人群回归，个体 NEAT 与代谢适应差异可达 ±10–15%；
+   自适应是拿你自己的数据反推，误差只剩记录误差。
+
+   为什么识食特别适合做这个：它需要「精确摄入」+「连续体重」两个输入。
+   多数 App 缺的是前者 —— 搜食物选份量本身误差就大，反推出来自然不准；
+   而按克扣库存的记账方式，摄入精度天然高一个量级。
+
+   注意 唯一致命陷阱：漏记整餐会系统性低估 TDEE
+      （以为你吃得少 → 推出消耗也低 → 目标越调越低 → 越记越不准）。
+      所以必须识别「记录不完整」的日子并剔除，而不是照单全收。
+
+   实现上刻意不调用 calc()，避免相互递归。
+*/
+const ADAPT={win:14,minValid:10,completeRatio:0.6,kcalPerKg:7700,minSpan:14,minPts:3};
+
+function adaptiveTDEE(){
+  const out={ok:false,reason:"",valid:0,excluded:0,exList:[],span:0,pts:0,
+             slope:0,avgIntake:0,avgEx:0,base:0,tdee:0,formula:0,diff:0};
+  const p=S.profile;
+  if(!p||!p.w||!p.h||!p.age){out.reason="先填身体数据";return out}
+  const bmr=10*p.w+6.25*p.h-5*p.age+(p.sex==="m"?5:-161);
+  const refTdee=bmr*p.act;          // 仅用于判断「这天记录是否完整」，不参与最终结果
+  const today=todayStr();
+
+  // ── 1. 体重趋势斜率：最小二乘，x 用「真实天数」而不是序号 ──
+  //    用序号是错的：如果你连记一周然后停三周，斜率会被严重扭曲。
+  const ws=Object.keys(S.wt||{}).filter(d=>typeof S.wt[d]==="number"&&isFinite(S.wt[d])).sort();
+  if(ws.length<ADAPT.minPts){out.pts=ws.length;out.reason="至少记录 3 次体重";return out}
+  const last=ws[ws.length-1];
+  const use=ws.filter(d=>dayDiff(last,d)<=ADAPT.win+14);
+  out.pts=use.length;
+  if(use.length<ADAPT.minPts){out.reason="近一个月内体重记录太少";return out}
+  const x0=dOf(last).getTime();
+  const xs=use.map(d=>(x0-dOf(d).getTime())/86400000);
+  const ys=use.map(d=>S.wt[d]);
+  const span=Math.max.apply(null,xs)-Math.min.apply(null,xs);
+  out.span=Math.round(span);
+  if(span<ADAPT.minSpan){out.reason="体重记录跨度不足 "+ADAPT.minSpan+" 天";return out}
+  const n=xs.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)*(xs[i]-mx)}
+  if(!den){out.reason="体重没有变化，算不出趋势";return out}
+  const slope=-(num/den);            // kg/天，正数 = 在涨
+  out.slope=Math.round(slope*1000)/1000;
+
+  // ── 2. 日均摄入：剔除「没记录」与「明显漏记」的日子 ──
+  const days=dayRange(today,ADAPT.win);
+  let sum=0,valid=0,ex=0;
+  days.forEach(function(d){
+    const t=dayTotals(d);
+    if(!t.k){ex++;out.exList.push({d,why:"没记录"});return}
+    if(t.k<refTdee*ADAPT.completeRatio){ex++;out.exList.push({d,why:"可能漏记"});return}
+    sum+=t.k;valid++;
+  });
+  out.valid=valid;out.excluded=ex;
+  if(valid<ADAPT.minValid){
+    out.reason="有效记录 "+valid+" 天，至少需要 "+ADAPT.minValid+" 天";return out;
+  }
+  out.avgIntake=Math.round(sum/valid);
+
+  // ── 3. 平均训练消耗 ──
+  //    自适应值测的是「总消耗」，里面已经包含了你惯常的训练。
+  //    所以要先减掉平均训练量得到「非训练基线」，再把当天的实际训练加回去，
+  //    否则规律训练的人会被重复计算一次。
+  let exSum=0;
+  days.forEach(function(d){
+    exSum+=(S.ex[d]||[]).reduce(function(a,x){return a+(Number(x.kcal)||0)},0);
+  });
+  out.avgEx=Math.round(exSum/days.length);
+
+  // ── 4. 反推 ──
+  out.tdee=Math.round(out.avgIntake-slope*ADAPT.kcalPerKg);
+  out.base=out.tdee-out.avgEx;
+  out.formula=Math.round(refTdee);
+  out.diff=out.tdee-out.formula;
+  const lo=Math.round(bmr),hi=Math.round(bmr*2.5);
+  out.lo=lo;out.hi=hi;
+  if(out.tdee<lo||out.tdee>hi){
+    out.reason="推算 "+out.tdee+" kcal 超出合理范围（"+lo+"–"+hi+"），多半是记录不全";
+    return out;
+  }
+  out.ok=true;
+  return out;
+}
+
 function calc(day){
   norm();
   const p=S.profile;if(!p||!p.w||!p.h||!p.age)return null;
   const d=day||todayStr();
   const bmr=10*p.w+6.25*p.h-5*p.age+(p.sex==="m"?5:-161);
-  const tdee=bmr*p.act;
+  /* 自适应 TDEE：开启且数据够用时，用它替代公式估算的基线。
+     注意用的是 adapt.base（已减去平均训练量），当日训练消耗仍会在下面正常叠加，
+     这样规律训练的人不会被重复计算。 */
+  let tdee=bmr*p.act;
+  let adaptUsed=null;
+  if(S.useAdaptive){
+    const a=adaptiveTDEE();
+    if(a.ok){tdee=a.base;adaptUsed={tdee:a.tdee,base:a.base,avgEx:a.avgEx,valid:a.valid,slope:a.slope}}
+  }
   const exK=exOf(d).reduce((a,e)=>a+(Number(e.kcal)||0),0);
   const training=isTrainDay(d);
   const intensity=dayIntensity(d);
@@ -1261,7 +1408,19 @@ function calc(day){
   const cgLow=cg<carbTarget*0.75;
   // 纤维
   const fb=fiberTarget(p,training);
-  return {bmr:Math.round(bmr),tdee:Math.round(tdee),exK:Math.round(exK),target,pg,fg,cg,fb,
+  /* ── 限量项（与「目标项」语义相反：目标项要吃到，限量项要压住）
+     依据 GB 28050 强制标示的 7 项 + 中国居民膳食指南：
+       钠        < 2000 mg   （NRV 2000mg，也是 WHO 推荐上限）
+       饱和脂肪  < 总热量的 10%（指南：饱和脂肪酸供能比 <10%）
+       糖        < 总热量的 10%，且不超过 50 g（指南：添加糖 <25g 更佳，上限 50g）
+     注意：糖这里按「单糖+双糖」算（含乳糖、果糖），所以牛奶水果也会计入 ——
+     与国标「糖」的口径一致，不等于「添加糖」。 */
+  const naLimit=2000;
+  const sfLimit=Math.max(10,Math.round(target*0.10/9));
+  const sgLimit=Math.min(50,Math.max(15,Math.round(target*0.10/4)));
+  return {bmr:Math.round(bmr),tdee:Math.round(tdee),tdeeFormula:Math.round(bmr*p.act),
+          exK:Math.round(exK),target,pg,fg,cg,fb,
+          naLimit,sfLimit,sgLimit,adaptUsed,
           floorApplied,pgCapped,cgCapped,fgCapped:false,cgLow,training,intensity,cKey,boost,restAdj,day:d,
           carbTarget};
 }
@@ -1269,10 +1428,12 @@ function calc(day){
 function dayTotals(day){
   norm();
   const l=S.log[day||todayStr()]||[];
-  return l.reduce((a,e)=>{a.k+=e.k||0;a.p+=e.p||0;a.f+=e.f||0;a.c+=e.c||0;a.fb+=e.fb||0;return a},
-                  {k:0,p:0,f:0,c:0,fb:0});
+  return l.reduce((a,e)=>{a.k+=e.k||0;a.p+=e.p||0;a.f+=e.f||0;a.c+=e.c||0;a.fb+=e.fb||0;
+    a.na+=e.na||0;a.sf+=e.sf||0;a.sg+=e.sg||0;return a},
+                  {k:0,p:0,f:0,c:0,fb:0,na:0,sf:0,sg:0});
 }
-function scale(o,g){const r=(g||0)/100;return {k:(o.k||0)*r,p:(o.p||0)*r,f:(o.f||0)*r,c:(o.c||0)*r,fb:(o.fb||0)*r}}
+function scale(o,g){const r=(g||0)/100;return {k:(o.k||0)*r,p:(o.p||0)*r,f:(o.f||0)*r,c:(o.c||0)*r,fb:(o.fb||0)*r,
+  na:(o.na||0)*r,sf:(o.sf||0)*r,sg:(o.sg||0)*r}}
 
 /* ================= 页面切换 ================= */
 function go(id){
@@ -1385,6 +1546,30 @@ function renderToday(){
     ${sug?`<div class="sugg">${ic("bolt",14)}<span>库存里 <b>${sug.need}g ${esc(sug.food.n)}</b> 可补足${sug.label}</span>
       <button class="btn-s" style="margin-left:auto;flex-shrink:0" onclick="eatSheet('${sug.food.id}')">去记录</button></div>`
       :`<div class="sugg" style="background:var(--surface-2);color:var(--ink-3)">${ic("bolt",14)}<span>库存里还没能精准补缺口的食材</span></div>`}
+  </div>`;
+
+  // ---- 限量项：钠 / 饱和脂肪 / 糖 ----
+  // 语义和上面的「还差多少」相反 —— 那三项是要吃够，这三项是要压住。
+  // 依据 GB 28050 强制标示的 7 项 + 《中国居民膳食指南》。
+  const lim=[
+    ["na","钠",t.na,c.naLimit,"mg","var(--d-sodium)"],
+    ["sf","饱和脂肪",t.sf,c.sfLimit,"g","var(--d-satfat)"],
+    ["sg","糖",t.sg,c.sgLimit,"g","var(--d-sugar)"],
+  ];
+  const limOver=lim.filter(x=>x[2]>x[3]);
+  h+=`<div class="card"><h3>${ic("alert",18)}今日限量<span class="count">压住，不是吃够</span></h3>
+    <div class="limlist">${lim.map(([k,lab,v,cap,unit,col])=>{
+      const p=cap?Math.min(100,Math.round(v/cap*100)):0;
+      const over=v>cap;
+      const fmt=x=>Math.abs(x)>=100?Math.round(x):Math.round(x*10)/10;
+      return `<div class="limrow">
+        <div class="lh"><span class="gl"><i style="background:${col}"></i>${lab}</span>
+          <b style="color:${over?"var(--warn)":"var(--ink)"}">${fmt(v)}<em>/${cap} ${unit}</em></b></div>
+        <div class="lbar"><i style="width:${p}%;background:${over?"var(--warn)":col}"></i></div>
+        <div class="lf">${over?`已超出 ${fmt(v-cap)} ${unit}`:`还剩 ${fmt(cap-v)} ${unit} 额度`}</div>
+      </div>`;
+    }).join("")}</div>
+    <div class="hint" style="margin-top:10px"><span>GB 28050《预包装食品营养标签通则》把这三项列为强制标示，就是因为「吃多了」比「吃少了」更常见。单项超出很常见，看一周整体趋势更有意义。</span></div>
   </div>`;
 
   // ---- 今日日程卡 ----
@@ -1519,7 +1704,7 @@ function quickEat(i){
   const x=FOODS[i],g=parseFloat($("qg").value)||0;
   if(g<=0){toast("克重要大于 0");return}
   const r=scale(x,g),d=todayStr();
-  (S.log[d]=S.log[d]||[]).push({n:x.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,out:true});
+  (S.log[d]=S.log[d]||[]).push({n:x.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,na:r.na,sf:r.sf,sg:r.sg,out:true});
   save();closeSheet();renderToday();toast("已记录");
 }
 function delEx(i){const d=todayStr();S.ex[d].splice(i,1);save();renderToday()}
@@ -1528,9 +1713,10 @@ function delEx(i){const d=todayStr();S.ex[d].splice(i,1);save();renderToday()}
 
 /** 库存剩余营养合计 */
 function invTotals(){
-  let k=0,p=0,f=0,c=0,g=0,fb=0;
-  S.inv.forEach(it=>{const r=scale(it,it.g);k+=r.k;p+=r.p;f+=r.f;c+=r.c;fb+=r.fb;g+=it.g});
-  return {k,p,f,c,fb,g};
+  let k=0,p=0,f=0,c=0,g=0,fb=0,na=0,sf=0,sg=0;
+  S.inv.forEach(it=>{const r=scale(it,it.g);k+=r.k;p+=r.p;f+=r.f;c+=r.c;fb+=r.fb;g+=it.g;
+    na+=r.na;sf+=r.sf;sg+=r.sg});
+  return {k,p,f,c,fb,g,na,sf,sg};
 }
 
 /** 近 N 天某食材的日均消耗（g/天）。返回 null 表示样本不足。 */
@@ -1956,7 +2142,8 @@ function doEat(id){
   if(g>it.g){toast("吃的比剩的多，请先补货");return}
   const r=scale(it,g),d=todayStr();
   S.log[d]=S.log[d]||[];
-  S.log[d].push({n:it.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,iid:it.id,b:{k:it.k,p:it.p,f:it.f,c:it.c,fb:it.fb,cat:it.cat,low:it.low}});
+  S.log[d].push({n:it.n,g:g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,na:r.na,sf:r.sf,sg:r.sg,iid:it.id,
+    b:{k:it.k,p:it.p,f:it.f,c:it.c,fb:it.fb,na:it.na,sf:it.sf,sg:it.sg,cat:it.cat,low:it.low}});
   it.g=Math.round((it.g-g)*10)/10;
   const emptied=it.g<=0;
   if(emptied)S.inv=S.inv.filter(x=>x.id!==id);
@@ -2041,7 +2228,7 @@ function addFromDb(){
   if(!pickFood){toast("先搜索并点选一个食物");return}
   const g=parseFloat($("addG").value)||0;
   if(g<=0){toast("填总克重");return}
-  S.inv.push({id:uid(),n:pickFood.n,g:g,k:pickFood.k,p:pickFood.p,f:pickFood.f,c:pickFood.c,fb:pickFood.fb,cat:pickFood.cat});
+  S.inv.push({id:uid(),n:pickFood.n,g:g,k:pickFood.k,p:pickFood.p,f:pickFood.f,c:pickFood.c,fb:pickFood.fb,na:pickFood.na,sf:pickFood.sf,sg:pickFood.sg,cat:pickFood.cat});
   save();$("q").value="";$("addG").value="";pickFood=null;$("sug").style.display="none";
   renderStock();toast("已加入库存");
 }
@@ -2137,8 +2324,8 @@ async function doScan(){
   if(!curImgs.length){toast("先选一张图");return}
   const mode=$("scanMode").value;
   const sys=mode==="pack"
-    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取：热量(千卡)、蛋白质(g)、脂肪(g)、碳水化合物(g)、膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注膳食纤维则估一个合理值。只返回JSON，格式：{"name":"具体商品名","energy":数值,"protein":数值,"fat":数值,"carbs":数值,"fiber":数值}`
-    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、碳水化合物(g)、膳食纤维(g)。若多张图是不同食物，取最主要的那一种作为名称。数值参考《中国食物成分表》。若是熟食/菜肴，按常见做法估算。只返回JSON，格式：{"name":"食物名","energy":数值,"protein":数值,"fat":数值,"carbs":数值,"fiber":数值}`;
+    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取中国国标 GB 28050 的强制标示项：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)，另外尽量给出膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注的项目按同类食品合理估算。只返回JSON，格式：{"name":"具体商品名","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`
+    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)、膳食纤维(g)。若多张图是不同食物，取最主要的那一种作为名称。数值参考《中国食物成分表》。若是熟食/菜肴，请特别注意中餐的隐形油盐（炒菜、勾芡、糖醋会显著抬高脂肪和钠），按常见做法估算。只返回JSON，格式：{"name":"食物名","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`;
   const btn=$("doScan");btn.disabled=true;
   const n=curImgs.length;
   $("scanMsg").innerHTML=`<span>识别中（${n} 张图），请稍候…</span>`;
@@ -2162,7 +2349,8 @@ async function doScan(){
     const j=JSON.parse(m[0]);
     $("rN").value=j.name||"";$("rK").value=j.energy??"";$("rP").value=j.protein??"";
     $("rF").value=j.fat??"";$("rC").value=j.carbs??"";
-    if($("rFb"))$("rFb").value=j.fiber??"";
+    const put=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
+    put("rFb",j.fiber);put("rNa",j.sodium);put("rSf",j.satfat);put("rSg",j.sugar);
     if($("rCat"))$("rCat").value=guessCat(j.name||"");   // 自动归类，用户可改
     $("scanResult").style.display="block";
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功（用了 ${n} 张图），请核对数值</span>`;
@@ -2188,15 +2376,17 @@ function shrink(src,max=1024){
 }
 function readR(){
   const nm=$("rN").value.trim();
-  return {n:nm,k:parseFloat($("rK").value)||0,p:parseFloat($("rP").value)||0,
-    f:parseFloat($("rF").value)||0,c:parseFloat($("rC").value)||0,
-    fb:parseFloat(($("rFb")||{}).value)||0,
-    g:parseFloat($("rG").value)||0,
+  const num=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
+  return {n:nm,k:num("rK"),p:num("rP"),
+    f:num("rF"),c:num("rC"),
+    fb:num("rFb"),na:num("rNa"),sf:num("rSf"),sg:num("rSg"),
+    g:num("rG"),
     cat:$("rCat")?$("rCat").value:guessCat(nm)};
 }
 function aiToStock(){
   const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
-  S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,cat:r.cat||guessCat(r.n)});
+  S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,
+    na:r.na,sf:r.sf,sg:r.sg,cat:r.cat||guessCat(r.n)});
   save();toast("已加入库存");$("scanResult").style.display="none";go("tab-stock");
 }
 /** 直接记入今日饮食：
@@ -2204,14 +2394,15 @@ function aiToStock(){
     likeStock=false → 外食，不动库存（标记 out:true） */
 function aiToLog(out){
   const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
-  const s={k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb},sc=scale(s,r.g),d=todayStr();
+  const s={k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,na:r.na,sf:r.sf,sg:r.sg},sc=scale(s,r.g),d=todayStr();
   S.log[d]=S.log[d]||[];
-  const entry={n:r.n,g:r.g,k:sc.k,p:sc.p,f:sc.f,c:sc.c,fb:sc.fb};
+  const entry={n:r.n,g:r.g,k:sc.k,p:sc.p,f:sc.f,c:sc.c,fb:sc.fb,na:sc.na,sf:sc.sf,sg:sc.sg};
   // 若能对应到库存里的同名食材，且用户希望扣库存，则扣减
   const match=S.inv.find(it=>it.n===r.n&&it.g>=r.g);
   if(!out&&match){
     entry.iid=match.id;
-    entry.b={k:match.k,p:match.p,f:match.f,c:match.c,fb:match.fb,cat:match.cat,low:match.low};
+    entry.b={k:match.k,p:match.p,f:match.f,c:match.c,fb:match.fb,
+      na:match.na,sf:match.sf,sg:match.sg,cat:match.cat,low:match.low};
     match.g=Math.round((match.g-r.g)*10)/10;
     if(match.g<=0)S.inv=S.inv.filter(x=>x.id!==match.id);
   }else{
@@ -2236,6 +2427,9 @@ function outEatSheet(){
       <div class="fld"><label>碳水 g</label><input id="oeC" type="number" inputmode="decimal"></div>
       <div class="fld"><label>脂肪 g</label><input id="oeF" type="number" inputmode="decimal"></div>
       <div class="fld"><label>纤维 g</label><input id="oeFb" type="number" inputmode="decimal"></div>
+      <div class="fld"><label>钠 mg</label><input id="oeNa" type="number" inputmode="decimal" placeholder="选填"></div>
+      <div class="fld"><label>饱和脂肪 g</label><input id="oeSf" type="number" inputmode="decimal" placeholder="选填"></div>
+      <div class="fld"><label>糖 g</label><input id="oeSg" type="number" inputmode="decimal" placeholder="选填"></div>
     </div>
     <div class="hint" style="margin-bottom:12px"><span>填的是整份的量（不是每 100g）。只想记热量也行，其余留空按 0 计。</span></div>
     <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button>
@@ -2247,14 +2441,71 @@ function doOutEat(){
   const g=parseFloat($("oeG").value)||0, k=parseFloat($("oeK").value)||0;
   if(g<=0&&k<=0){toast("至少填克重或热量");return}
   const d=todayStr();
+  const num=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
   (S.log[d]=S.log[d]||[]).push({
-    n,g:g||0,k,p:parseFloat($("oeP").value)||0,c:parseFloat($("oeC").value)||0,
-    f:parseFloat($("oeF").value)||0,fb:parseFloat($("oeFb").value)||0,out:true
+    n,g:g||0,k,p:num("oeP"),c:num("oeC"),
+    f:num("oeF"),fb:num("oeFb"),na:num("oeNa"),sf:num("oeSf"),sg:num("oeSg"),out:true
   });
   save();closeSheet();renderToday();toast("已记入今日（不影响库存）");
 }
 
 /* ================= 我的 ================= */
+/* ================= 自适应 TDEE 面板 ================= */
+function renderAdapt(){
+  const el=$("adaptBox");if(!el)return;
+  const a=adaptiveTDEE();
+  if(!a.ok){
+    // 数据不足：告诉用户「差什么、还差多少」，而不是一句「数据不足」
+    const need=ADAPT.minValid;
+    const pctW=a.span?Math.min(100,Math.round(a.span/ADAPT.minSpan*100)):0;
+    const pctD=Math.min(100,Math.round(a.valid/need*100));
+    el.innerHTML=`
+      <div class="hint" style="margin-bottom:12px"><span>用你自己的数据反推真实消耗，比公式更准。
+        需要<b>连续 ${ADAPT.win} 天饮食记录</b> + <b>跨度 ${ADAPT.minSpan} 天以上的体重记录</b>。</span></div>
+      <div class="limrow">
+        <div class="lh"><span class="gl"><i style="background:var(--d-protein)"></i>饮食记录</span>
+          <b>${a.valid}<em>/${need} 天</em></b></div>
+        <div class="lbar"><i style="width:${pctD}%;background:var(--d-protein)"></i></div>
+      </div>
+      <div class="limrow" style="padding-bottom:0">
+        <div class="lh"><span class="gl"><i style="background:var(--d-fiber)"></i>体重跨度</span>
+          <b>${a.span}<em>/${ADAPT.minSpan} 天</em></b></div>
+        <div class="lbar"><i style="width:${pctW}%;background:var(--d-fiber)"></i></div>
+      </div>
+      <div class="hint" style="margin-top:12px;color:var(--warn)"><span>${ic("info",14)}${esc(a.reason)}</span></div>`;
+    return;
+  }
+  const up=a.slope>0.005, down=a.slope<-0.005;
+  const trendTxt=up?`每周 +${Math.round(a.slope*7*100)/100} kg`
+    :down?`每周 ${Math.round(a.slope*7*100)/100} kg`:`基本持平`;
+  const diffTxt=(a.diff>0?"+":"")+a.diff;
+  el.innerHTML=`
+    <div class="kcalhero" style="padding-bottom:10px">
+      <div class="kh-lab">反推的每日总消耗</div>
+      <div class="kh-num"><b>${a.tdee}</b><span class="kh-u">kcal</span></div>
+      <div class="kh-foot"><b>基于 ${a.valid} 天饮食 + ${a.pts} 次体重</b><span>趋势 ${trendTxt}</span></div>
+    </div>
+    <div class="adaptrows">
+      <div class="ar"><span>日均摄入</span><b>${a.avgIntake} kcal</b></div>
+      <div class="ar"><span>体重趋势</span><b>${a.slope>0?"+":""}${a.slope} kg/天</b></div>
+      <div class="ar"><span>平均训练</span><b>${a.avgEx} kcal/天</b></div>
+      <div class="ar"><span>公式估算</span><b>${a.formula} kcal</b></div>
+      <div class="ar" style="border-bottom:none"><span>两者差</span><b style="color:${Math.abs(a.diff)>200?"var(--warn)":"var(--ink)"}">${diffTxt} kcal</b></div>
+    </div>
+    ${a.excluded?`<div class="hint" style="margin-top:10px"><span>已剔除 ${a.excluded} 天记录不完整的日子（漏记整餐会让消耗被低估）</span></div>`:""}
+    <div class="seg" style="margin-top:14px">
+      <button class="${S.useAdaptive?"on":""}" onclick="setAdaptive(true)">用自适应值</button>
+      <button class="${S.useAdaptive?"":"on"}" onclick="setAdaptive(false)">用公式估算</button>
+    </div>
+    <div class="hint" style="margin-top:10px"><span>${S.useAdaptive
+      ? "当前用自适应值当基线（已扣除平均训练量，当天训练消耗仍会另加）"
+      : "当前用 Mifflin-St Jeor 公式 × 活动系数估算"}</span></div>`;
+}
+function setAdaptive(on){
+  S.useAdaptive=!!on;save();renderAdapt();renderToday();
+  toast(on?"已改用自适应消耗":"已改回公式估算");
+}
+
 function renderMe(){
   const p=S.profile;
   if(p){$("pSex").value=p.sex;$("pAge").value=p.age;$("pH").value=p.h;$("pW").value=p.w;$("pAct").value=p.act;$("pAdj").value=p.adj;$("pPk").value=p.pk}
@@ -2272,6 +2523,7 @@ function renderMe(){
   const a=S.api;$("apiBase").value=a.base;$("apiModel").value=a.model;$("apiKey").value=a.key;
   renderWeightTrend();
   renderRestBudget();
+  renderAdapt();
 }
 
 /** 训练日 vs 休息日目标并排显示，让人一眼看到差多少 */
@@ -2300,7 +2552,6 @@ function dualTargetHtml(){
   if(savedEx)S.ex[todayStr()]=savedEx; else delete S.ex[todayStr()];
   if(!cRest||!cTrain)return "";
   const row=(lab,sub,a,b,unit)=>{
-    const diff=b-a;
     return `<div class="dual-row">
       <span class="dual-lab">${lab}<em>${sub}</em></span>
       <span class="dual-v">${a}${unit||"g"}</span>
@@ -2308,6 +2559,14 @@ function dualTargetHtml(){
       <span class="dual-v hot">${b}${unit||"g"}</span>
     </div>`;
   };
+  // 限量项：两天的上限是一样的（钠固定 2000mg；饱和脂肪/糖随热量 10% 浮动）
+  const capRow=(lab,sub,a,b,unit)=>
+    `<div class="dual-row cap">
+      <span class="dual-lab">${lab}<em>${sub}</em></span>
+      <span class="dual-v">≤${a}${unit}</span>
+      <span class="dual-arrow">→</span>
+      <span class="dual-v hot">≤${b}${unit}</span>
+    </div>`;
   return `<div class="dual">
     <div class="dual-head">
       <span></span><span class="dual-h">休息日</span><span></span><span class="dual-h hot">训练日</span>
@@ -2316,8 +2575,12 @@ function dualTargetHtml(){
     ${row("蛋白质","按强度上调",cRest.pg,cTrain.pg)}
     ${row("碳水","按 g/kg 分档",cRest.cg,cTrain.cg)}
     ${row("膳食纤维","训练日 +5g",cRest.fb,cTrain.fb)}
+    <div class="dual-sep">限量项（压住，不是吃够）</div>
+    ${capRow("钠","国标强制标示",cRest.naLimit,cTrain.naLimit," mg")}
+    ${capRow("饱和脂肪","总热量 10%",cRest.sfLimit,cTrain.sfLimit," g")}
+    ${capRow("糖","总热量 10%，上限 50g",cRest.sgLimit,cTrain.sgLimit," g")}
   </div>
-  <div class="hint" style="margin-top:9px"><span>训练日示例：60 分钟中等强度力量训练。实际以当天日程/记录为准。</span></div>`;
+  <div class="hint" style="margin-top:9px"><span>训练日示例：60 分钟中等强度力量训练。实际以当天日程/记录为准。限量项依据 GB 28050 强制标示项与《中国居民膳食指南》。</span></div>`;
 }
 
 function renderExList(){
@@ -2444,16 +2707,19 @@ function weightSeries(n=30){
   return keys.slice(-n).map(d=>({d,w:S.wt[d]}));
 }
 // 用最小二乘算斜率（kg/周），无足够数据返回 null
+// 注意 x 轴必须用「真实天数」而不是数组序号：如果你连记一周然后停三周，
+//    用序号会把那三周压成一个点，斜率被严重扭曲。
 function weightTrend(){
   const s=weightSeries(30);
   if(s.length<2)return null;
-  const pts=s.map((x,i)=>({x:i,y:x.w}));
+  const x0=dOf(s[s.length-1].d).getTime();
+  const pts=s.map(x=>({x:(x0-dOf(x.d).getTime())/86400000,y:x.w}));
   const n=pts.length;
   const mx=pts.reduce((a,p)=>a+p.x,0)/n, my=pts.reduce((a,p)=>a+p.y,0)/n;
   let num=0,den=0;
   pts.forEach(p=>{num+=(p.x-mx)*(p.y-my);den+=(p.x-mx)**2});
   if(!den)return null;
-  const perDay=num/den;
+  const perDay=-(num/den);           // 负号：x 是「距今天数」，越大越早
   const first=s[0].w, last=s[s.length-1].w;
   return {
     kgPerWeek:Math.round(perDay*7*100)/100,
