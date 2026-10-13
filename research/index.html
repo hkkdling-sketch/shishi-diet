@@ -147,9 +147,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;paddi
     <span class="ti">先认错：我漏了一个国标</span>
     <b>GB 28050《预包装食品营养标签通则》强制标示 7 项</b>：能量、蛋白质、脂肪、
     <b>饱和脂肪</b>、碳水化合物、<b>糖</b>、<b>钠</b>。<br><br>
-    而识食只追踪 5 项：热量、蛋白质、脂肪、碳水、膳食纤维。
-    <b>缺的 3 项（饱和脂肪、糖、钠）全部是国标强制项</b>——其中钠从 2011 版就是强制的，
-    我做了七轮都没发现。
+    而识食当时只追踪 5 项：热量、蛋白质、脂肪、碳水、膳食纤维。
+    <b>缺的 3 项全部是国标强制项</b>——其中钠从 2011 版就是强制的，
+    我做了七轮都没发现。<br><br>
+    <b style="color:var(--accent)">→ 已在第八轮补齐（见文末行动清单）。</b>
+  </div>
+
+  <div class="note">
+    <span class="ti">这份报告的三条核心结论</span>
+    <b>① 数据模型不完整比审美问题严重得多</b> —— 国标强制项不是「还可以更好」，是「本来就不合格」。<br>
+    <b>② 环形图是最难读的编码，而且撞了 Apple 的保留元素</b> —— 长度比角度准得多，已改条形。<br>
+    <b>③ 我们的「库存记账」是中餐场景下的结构性优势</b> —— 调研的所有项目里没有一个用这种模型。
   </div>
 
   <h2>一、营养数据字段：这是硬规范，不是可选项</h2>
@@ -470,49 +478,51 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;paddi
 
   <div class="prio">
     <div class="pr">
-      <span class="pv p0">P0</span>
+      <span class="pv p0">完成</span>
       <div class="body">
         <div class="t">补上 3 个国标强制字段：钠、饱和脂肪、糖</div>
-        <p class="d">这是<b>合规问题，不是功能取舍</b>。数据要补进 87 条食物库，
-          拍照识别的 prompt 也要跟着改（让模型一并提取）。钠尤其重要 ——
-          中国饮食最大的健康风险点。</p>
+        <p class="d">已落地：109 条食物库全部补齐字段，今日页新增「今日限量」卡（条形朝上限填充），
+          拍照识别 prompt 改为按 GB 28050 提取 7 项，双目标对照表加了限量项分组。
+          <b>钠上限固定 2000mg；饱和脂肪与糖各取总热量 10%，糖另设 50g 硬上限。</b></p>
       </div>
     </div>
     <div class="pr">
-      <span class="pv p0">P0</span>
+      <span class="pv p0">完成</span>
       <div class="body">
         <div class="t">环形图 → 条形 + 数字</div>
-        <p class="d">NN/g 的结论很明确：长度比角度好读。而且 Apple HIG 把 Activity 圆环
-          保留给了健康三环，不该挪用。改成条形后，<b>同时解决了可读性和合规两个问题</b>。</p>
+        <p class="d">已替换为「大数字 + 条形 + 文字状态」，并补上 <code>role="progressbar"</code> 与
+          <code>aria-valuenow</code>。浏览器断言里加了「不得存在环形图」的硬检查。</p>
       </div>
     </div>
     <div class="pr">
-      <span class="pv p1">P1</span>
+      <span class="pv p1">完成</span>
       <div class="body">
         <div class="t">「超 X」改中性措辞</div>
-        <p class="d">研究显示负面提示会显著提高弃用率。信息要保留（不该隐藏），
-          但去掉红色警告感和「你搞砸了」的暗示，改成中性的「已超出 12g」。</p>
+        <p class="d">已改为「已超出」，颜色从警告红换成琥珀色，并补了一句
+          「单项超出很常见，看一周的整体趋势比盯单日更有意义」。</p>
       </div>
     </div>
     <div class="pr">
-      <span class="pv p1">P1</span>
+      <span class="pv p1">完成</span>
       <div class="body">
         <div class="t">测非文本元素对比度，逐个量触控目标</div>
-        <p class="d">我们一直在测正文对比度，但<b>进度条、日历格子、分隔线这些非文本元素的
-          3:1 要求从没测过</b>。小按钮（关闭 ×、序号徽标）也要在真机上量到 ≥44pt。</p>
+        <p class="d">已加断言：进度条<b>填充 ≥3:1</b>（实测浅 5.11:1 / 深 7.47:1）、
+          <b>轨道 ≥1.5:1</b>（原本只有 1.2:1，看不出量程，已把 <code>--track</code> 调深）。</p>
       </div>
     </div>
     <div class="pr">
-      <span class="pv p1">P1</span>
+      <span class="pv p1">完成</span>
       <div class="body">
         <div class="t">自适应 TDEE</div>
-        <p class="d">用能量守恒反推真实消耗，替掉现在的公式估算。
-          我们<b>已经同时有精确摄入（按克扣库存）和体重日志</b> —— 这是做这件事最好的形态，
-          但行业里没人有这两个输入同时精确的条件。</p>
+        <p class="d">已实现：<code>TDEE = 日均摄入 − 体重趋势斜率 × 7700</code>。
+          <b>会剔除「没记录」和「明显漏记」的日子</b>（漏记整餐是唯一致命陷阱），
+          并扣除平均训练量避免重复计算。需要 14 天饮食 + 14 天体重跨度才启用，
+          数据不足时给出还差多少。合成数据实测：吃 2000 / 掉 1kg/14天 → 反推 <b>2551 kcal</b>（理论值 2550）。
+          顺带修掉一个旧 bug：体重趋势原来用「数组序号」当 x 轴，连记一周再停三周会把斜率放大 10 倍。</p>
       </div>
     </div>
     <div class="pr">
-      <span class="pv p2">P2</span>
+      <span class="pv p2">待做</span>
       <div class="body">
         <div class="t">记忆历史份量 + 档位修正</div>
         <p class="d">拍照识别后记住用户修正过的克重，下次直接给。以及给「小 / 中 / 大」
@@ -520,7 +530,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:56px;paddi
       </div>
     </div>
     <div class="pr">
-      <span class="pv p2">P2</span>
+      <span class="pv p2">待做</span>
       <div class="body">
         <div class="t">Nutri-Score 评分 + 识别结果校验</div>
         <p class="d">用 Nutri-Score 给单件食品打分，让用户一眼看出好坏。
