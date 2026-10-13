@@ -243,6 +243,7 @@ Key 只存本机 `localStorage`，不会上传到任何地方。
 ├── report/         # 改造报告页（GitHub Pages 托管）
 ├── guide/          # 手机上手指南页
 ├── research/       # 行业调研报告
+├── .workbuddy-ai/  # AI 协作约定（技能：构建/测试/部署流程 + 领域规则 + 设计铁律）
 ├── proxy/          # 可选的拍照识别代理（Cloudflare Worker，免去每台设备填 Key）
 │   ├── index.html  #   部署图文步骤（带复制按钮，代码实时读取 worker.js）
 │   ├── worker.js   #   Worker 源码
@@ -304,6 +305,9 @@ node _build/test-worker.mjs
 
 # 代理部署页：双主题、代码与源码逐字一致、复制按钮可用
 node _build/render-proxy.js
+```
+
+```bash
 
 # 真实浏览器：双主题截图、控制台错误、对比度、首屏可见性（需 playwright）
 node _build/render.js
@@ -312,7 +316,16 @@ node _build/render.js
 node _build/render-guide.js
 ```
 
-全部通过才算改动合格。当前合计 **359 条断言 + 浏览器端到端选图测试**。覆盖的关键断言：
+### AI 协作约定
+
+仓库里的 `.workbuddy-ai/skills/shishi-diet/` 是一份**项目技能**，把构建流程、测试纪律、设计铁律和领域规则写成了可被 AI 直接加载的形式。
+
+它解决的问题：这个项目积累了大量「不写下来就会踩第二次」的约定 ——不能手改 `index.html`、界面禁止 emoji、限量项和目标项语义相反、断言不能同义反复、测用户的实际动作而不是测元素存在性。
+
+任何 AI 会话加载它之后，就不用再从零解释一遍这些规则。
+
+
+全部通过才算改动合格。当前合计 **360 条断言 + 浏览器端到端选图测试**。覆盖的关键断言：
 
 - 宏量营养素回算热量与目标偏差 **≤ 4 kcal**（训练日与休息日都要过）
 - 蛋白质占比 **≤ 35%** 总热量
