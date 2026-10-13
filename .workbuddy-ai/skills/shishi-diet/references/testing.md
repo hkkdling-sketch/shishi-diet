@@ -2,27 +2,22 @@
 
 交付前**全部**必须通过。当前合计 **360 条断言 + 浏览器端到端**。
 
+
 ## 跑法
 
+**一条命令跑全，不要手敲 glob：**
+
 ```bash
-cd <仓库目录>
-PY="C:/Users/25675/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe"
-ND="C:/Users/25675/.workbuddy-ai/binaries/node/versions/22.22.2-6/node.exe"
-export NODE_PATH="C:/Users/25675/.workbuddy-ai/binaries/node/workspace/node_modules"
-
-$PY _build/assemble.py
-$PY _build/verify.py                 # 结构校验，必须 0 错误
-
-for f in smoke edge3 edge-inv edge-undo edge-habit edge-train edge-install edge-adapt edge-api; do
-  $ND _build/$f.js
-done
-$ND _build/test-worker.mjs
-$ND _build/verify-skill.js        # 元测试：文档数字 vs 实际断言数
-
-# 浏览器端到端（先起服务）
-$PY -m http.server 8777 --bind 127.0.0.1 --directory . &
-$ND _build/render.js
+bash _build/test.sh          # 拼装 + 结构校验 + 9 个断言套件 + 元测试
+bash _build/test.sh --full   # 再加浏览器端到端（脚本会自己起本地服务）
 ```
+
+> 为什么不用 `node _build/edge-*.js`：那个 glob **会漏掉两个套件** ——
+> `edge3.js` 不匹配 `edge-*`（没有连字符），`test-worker.mjs` 不是 `.js`。
+> `test.sh` 里是显式列表，一条不漏。
+
+想单独跑某个套件时直接指定文件，并注意断言函数名不统一
+（`edge3/inv/undo/habit/train` 用 `t`，其余用 `ok`）。
 
 ## 各套件覆盖什么
 
