@@ -47,19 +47,14 @@ emoji 在 iOS / Android / Windows 上渲染差异极大，而且会破坏视觉�
 
 ```
 改 _build/ 源文件
-  → python _build/assemble.py      # 拼装 index.html
-  → python _build/verify.py        # 结构校验（0 错误才算过）
-  → node _build/edge-*.js          # 9 个断言套件
-  → node _build/render*.js         # 浏览器端到端（需先起 http 服务）
+  → bash _build/test.sh            # 拼装 + 结构校验 + 9 个断言套件 + 元测试
+  → bash _build/test.sh --full     # 再加浏览器端到端（会自己起本地服务）
   → bash _build/push.sh <文件...>   # 推送（走 GitHub Contents API）
   → 等 Pages built，比对线上与本地字节数一致
 ```
 
-浏览器测试需要本地服务。`render.js` 用 8777，`render-guide.js` 用 8778，`render-proxy.js` 用 8780：
-
-```bash
-python -m http.server 8777 --bind 127.0.0.1 --directory .
-```
+**不要手敲 `node _build/edge-*.js`** —— 这个 glob 会漏掉 `edge3.js`（没有连字符）
+和 `test-worker.mjs`（不是 .js）。`test.sh` 里是显式列表，一条不漏。
 
 推送用 `_build/push.sh`（走 GitHub Contents API），**不要用 `git push`** ——
 沙箱内 git 传输层被代理阻断，会反复报 `CONNECT tunnel failed`。
@@ -127,4 +122,4 @@ python -m http.server 8777 --bind 127.0.0.1 --directory .
 ## 参考文件
 
 - `references/architecture.md` —— 数据模型、关键函数、文件职责
-- `references/testing.md` —— 9 个测试套件各自覆盖什么，怎么跑
+- `references/testing.md` —— 各测试套件覆盖什么、怎么跑、写测试的三条纪律
