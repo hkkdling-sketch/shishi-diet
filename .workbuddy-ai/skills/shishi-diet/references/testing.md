@@ -1,6 +1,6 @@
 # 测试套件
 
-交付前**全部**必须通过。当前合计 **359 条断言 + 浏览器端到端**。
+交付前**全部**必须通过。当前合计 **360 条断言 + 浏览器端到端**。
 
 ## 跑法
 
@@ -17,6 +17,7 @@ for f in smoke edge3 edge-inv edge-undo edge-habit edge-train edge-install edge-
   $ND _build/$f.js
 done
 $ND _build/test-worker.mjs
+$ND _build/verify-skill.js        # 元测试：文档数字 vs 实际断言数
 
 # 浏览器端到端（先起服务）
 $PY -m http.server 8777 --bind 127.0.0.1 --directory . &
@@ -38,6 +39,7 @@ $ND _build/render.js
 | `edge-adapt.js` | 64 | 国标 3 字段 + 自适应 TDEE：限量目标、漏记剔除、反推数值、边界 |
 | `edge-api.js` | 32 | 接口配置：服务商猜测、错误提示翻译、无 Key 模式、连接测试 |
 | `test-worker.mjs` | 37 | 代理 Worker：CORS 预检、来源校验、模型白名单、错误透传 |
+| `verify-skill.js` | — | **元测试**：技能文档里的数字与实际断言数对账；两份技能必须逐字一致 |
 | `render.js` | — | 双主题截图、控制台错误、对比度、首屏可见性、选图多选、限量卡、自适应卡 |
 | `render-guide.js` | — | 指南页：锚点有效性、横向溢出、FAQ 完整性 |
 | `render-proxy.js` | — | 部署页：代码与 `worker.js` 逐字一致、复制按钮可用 |
