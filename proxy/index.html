@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<title>识食 · 部署识别代理</title>
+<style>
+:root{
+  --canvas:#faf8f5; --surface:#fff; --surface-2:#f0ede7;
+  --ink:#2b2a27; --ink-2:#6b675f; --ink-3:#9a948a;
+  --line:#e6e2da; --line-2:#d8d3c9;
+  --accent:#3B7A57; --accent-soft:#eaf1ec;
+  --danger:#c0392b; --warn:#b8860b;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --canvas:#141412; --surface:#1c1b19; --surface-2:#26241f;
+    --ink:#eae7e0; --ink-2:#a8a29a; --ink-3:#7a746b;
+    --line:#2e2c28; --line-2:#3a3833;
+    --accent:#7fb894; --accent-soft:#1f2b23;
+    --danger:#e07a6a; --warn:#d4a33c;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;padding:0 0 80px}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);background:var(--surface);padding:36px 0 28px;margin-bottom:32px}
+h1{font-size:25px;font-weight:650;letter-spacing:-.02em}
+h1 .badge{font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);
+  padding:4px 9px;border-radius:6px;vertical-align:middle;margin-left:8px}
+header p{color:var(--ink-2);margin-top:10px;font-size:14.5px;max-width:600px}
+header .links{margin-top:18px;display:flex;gap:9px;flex-wrap:wrap}
+header .links a{color:var(--accent);text-decoration:none;font-size:13px;font-weight:500;
+  border:1px solid var(--line);padding:8px 14px;border-radius:8px;background:var(--surface)}
+header .links a:hover{background:var(--accent-soft);border-color:var(--accent)}
+p{margin:0 0 12px;color:var(--ink-2)}
+p strong,li strong{color:var(--ink);font-weight:600}
+code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.86em;
+  background:var(--surface-2);padding:2px 6px;border-radius:4px;color:var(--ink);word-break:break-all}
+a{color:var(--accent)}
+
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:13px 17px;border-radius:0 10px 10px 0;margin:16px 0;font-size:14px;color:var(--ink);line-height:1.65}
+.note b{color:var(--accent)}
+.note .ti{font-weight:600;display:block;margin-bottom:3px}
+.warnbox{border-left:3px solid var(--warn);background:#fbf3e2;padding:13px 17px;
+  border-radius:0 10px 10px 0;margin:16px 0;font-size:14px;color:var(--ink);line-height:1.65}
+.warnbox .ti{font-weight:600;display:block;margin-bottom:3px;color:var(--warn)}
+@media(prefers-color-scheme:dark){.warnbox{background:#2b2718}}
+
+.step{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:16px 0;overflow:hidden}
+.step .sh{display:flex;align-items:center;gap:11px;padding:15px 17px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.step .n{width:25px;height:25px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:13px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.step .st{font-weight:600;font-size:15px}
+.step .sb{padding:15px 17px}
+.step .sb>*:last-child{margin-bottom:0}
+ol,ul{margin:0 0 12px;padding-left:22px;color:var(--ink-2)}
+li{margin:5px 0;line-height:1.65}
+li code{font-size:.85em}
+
+table{width:100%;border-collapse:collapse;margin:10px 0 14px;font-size:13.5px;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{background:var(--surface-2);text-align:left;padding:9px 12px;font-size:11.5px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+td{padding:10px 12px;border-top:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+td b{color:var(--ink)}
+td code{font-size:.84em}
+
+.codebox{position:relative;margin:12px 0}
+.codebox .cb-top{display:flex;align-items:center;gap:8px;background:var(--surface-2);
+  border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;padding:8px 12px}
+.codebox .cb-name{font-size:12px;color:var(--ink-3);font-family:ui-monospace,monospace}
+.codebox .cb-copy{margin-left:auto;font-size:12px;padding:5px 12px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;font-weight:500}
+.codebox .cb-copy:hover{border-color:var(--accent);color:var(--accent)}
+.codebox pre{margin:0;border:1px solid var(--line);border-radius:0 0 10px 10px;
+  background:var(--surface);padding:14px;overflow:auto;max-height:340px}
+.codebox code{background:none;padding:0;font-size:12px;line-height:1.6;white-space:pre;color:var(--ink)}
+
+.faq{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin:14px 0}
+.fq{border-bottom:1px solid var(--line);padding:14px 17px}
+.fq:last-child{border-bottom:none}
+.fq .q{font-weight:600;font-size:14px;margin-bottom:5px}
+.fq .a{font-size:13.5px;color:var(--ink-2);line-height:1.65}
+.fq .a code{font-size:.84em}
+
+footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--line)}
+@media(max-width:600px){
+  h1{font-size:20px}.wrap{padding:0 16px}
+  table{font-size:12.5px}th,td{padding:8px 9px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>部署识别代理<span class="badge">约 5 分钟</span></h1>
+    <p>把 API Key 放到一个免费的小服务里，识食就再也不用填 Key —— <strong>所有设备永久免配置</strong>。</p>
+    <div class="links">
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/">🌐 打开识食</a>
+      <a href="https://hkkdling-sketch.github.io/shishi-diet/guide/">📱 上手指南</a>
+      <a href="https://github.com/hkkdling-sketch/shishi-diet/tree/main/proxy" target="_blank">GitHub 源码</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="note">
+    <span class="ti">先确认你需不需要做这个</span>
+    <b>只在一个手机上用 → 不用折腾</b>，直接填一次 Key 就好，1 分钟搞定。<br><br>
+    这个方案是给下面这些情况的：<b>① 多台设备</b>（手机 + 平板 + 电脑）；
+    <b>② 经常清浏览器数据</b>；<b>③ 想分享给别人用</b>，但不想把自己的 Key 给别人。
+  </div>
+
+  <div class="note">
+    <span class="ti">做完之后是什么效果</span>
+    <b>你只需要在识食里填一个网址，Key 那一栏留空。</b><br>
+    之后换手机、重装浏览器、清理数据 —— 都不用再填任何东西。
+  </div>
+
+  <!-- ============ 步骤 1 ============ -->
+  <div class="step">
+    <div class="sh"><span class="n">1</span><span class="st">拿一个 API Key</span></div>
+    <div class="sb">
+      <ol>
+        <li>打开 <a href="https://open.bigmodel.cn/" target="_blank">open.bigmodel.cn</a>，注册 / 登录（手机号即可）</li>
+        <li>左侧找 <b>「API 密钥」</b> 或 <b>「密钥管理」</b></li>
+        <li>点 <b>「创建 API Key」</b>，复制出来</li>
+      </ol>
+      <p>复制出来大概是这个形状（32 位十六进制，中间可能有个点）：</p>
+      <p><code>a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6.Xy9Zk2Lm3Np4Qr5S</code></p>
+      <div class="warnbox">
+        <span class="ti">先存到记事本里</span>
+        这串 Key <b>只在创建时显示一次</b>，关掉页面就看不到了。丢了就再建一个。
+      </div>
+      <p style="margin-bottom:0">免费模型是 <b>GLM-4V-Flash</b>，不用充值。</p>
+    </div>
+  </div>
+
+  <!-- ============ 步骤 2 ============ -->
+  <div class="step">
+    <div class="sh"><span class="n">2</span><span class="st">创建 Cloudflare Worker</span></div>
+    <div class="sb">
+      <ol>
+        <li>打开 <a href="https://dash.cloudflare.com/sign-up" target="_blank">dash.cloudflare.com</a>，注册（邮箱即可，免费）</li>
+        <li>登录后，左侧菜单找 <b>「Workers &amp; Pages」</b>（计算 / Compute 下面）</li>
+        <li>点 <b>「Create」</b> → 选 <b>「Create Worker」</b></li>
+        <li>名字随便起，比如 <code>shishi-proxy</code> → 点 <b>「Deploy」</b></li>
+        <li>部署完会看到一个代码编辑器 → 点 <b>「Edit code」</b></li>
+      </ol>
+      <p style="margin-bottom:0">编辑器里默认有一段示例代码，<b>全选删掉</b>，下一步粘贴我们的。</p>
+    </div>
+  </div>
+
+  <!-- ============ 步骤 3 ============ -->
+  <div class="step">
+    <div class="sh"><span class="n">3</span><span class="st">粘贴代码</span></div>
+    <div class="sb">
+      <p>把下面这段<b>全部</b>复制，覆盖掉编辑器里的内容，然后点右上角 <b>「Deploy」</b>。</p>
+      <div class="codebox">
+        <div class="cb-top">
+          <span class="cb-name">worker.js</span>
+          <button class="cb-copy" id="copyBtn">复制全部</button>
+        </div>
+        <pre><code id="workerCode">加载中…</code></pre>
+      </div>
+      <div class="note">
+        <span class="ti">不用改代码</span>
+        所有配置都通过下一步的「环境变量」来做，代码本身一个字都不用动。
+        以后想换模型、换厂商，也只改变量。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 步骤 4 ============ -->
+  <div class="step">
+    <div class="sh"><span class="n">4</span><span class="st">配置环境变量（关键一步）</span></div>
+    <div class="sb">
+      <p>回到 Worker 页面 → 顶部 <b>「Settings」</b> → 左侧 <b>「Variables and Secrets」</b> → 点 <b>「Add」</b>，加下面两个：</p>
+      <table>
+        <tr><th>变量名</th><th>值</th><th>类型</th></tr>
+        <tr>
+          <td><code>API_KEY</code></td>
+          <td>第 1 步复制的 Key</td>
+          <td><b>Secret</b>（选这个才会加密存储）</td>
+        </tr>
+        <tr>
+          <td><code>ALLOW_ORIGIN</code></td>
+          <td><code>https://hkkdling-sketch.github.io</code></td>
+          <td>Text</td>
+        </tr>
+      </table>
+      <div class="warnbox">
+        <span class="ti">ALLOW_ORIGIN 一定要设对</span>
+        这是防止别人白嫖你 Key 的唯一屏障。格式要求：<br>
+        ✅ 正确：<code>https://hkkdling-sketch.github.io</code><br>
+        ❌ 错误：<code>hkkdling-sketch.github.io</code>（少了 <code>https://</code>）<br>
+        ❌ 错误：<code>https://hkkdling-sketch.github.io/shishi-diet/</code>（<b>不要</b>带路径和末尾斜杠）
+      </div>
+      <p><b>加完之后必须再点一次「Deploy」</b>，变量才会生效。这一步最容易漏。</p>
+      <p style="margin-bottom:0">（还有个可选的 <code>UPSTREAM</code>，默认就是智谱，不用管。）</p>
+    </div>
+  </div>
+
+  <!-- ============ 步骤 5 ============ -->
+  <div class="step">
+    <div class="sh"><span class="n">5</span><span class="st">在识食里填地址</span></div>
+    <div class="sb">
+      <ol>
+        <li>复制你的 Worker 地址（在 Worker 页面顶部，形如 <code>https://shishi-proxy.你的名字.workers.dev</code>）</li>
+        <li>打开识食 → <b>「拍照」</b> 页 → 展开 <b>「识别接口设置」</b></li>
+        <li>服务商选 <b>「自建代理（不用填 Key）」</b></li>
+        <li>API 地址：粘贴刚才那个 Worker 地址</li>
+        <li>模型：填 <code>glm-4v-flash</code></li>
+        <li>API Key：<b>留空</b></li>
+        <li>点 <b>「保存设置」</b> → 再点 <b>「测试连接」</b></li>
+      </ol>
+      <p style="margin-bottom:0">看到绿色的 <b>「连接正常」</b> 就成了。以后任何设备只要填这一个地址。</p>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:26px">
+    <span class="ti">免费额度够用吗</span>
+    Cloudflare Workers 免费版 <b>每天 10 万次请求</b>。
+    识食一次识别 = 1 次请求，个人用一天最多几十次，<b>远远用不完</b>。
+    智谱的 GLM-4V-Flash 目前也是免费的，所以整条链路 <b>0 成本</b>。
+  </div>
+
+  <h2 style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--ink-3);margin:40px 0 14px">出问题了看这里</h2>
+
+  <div class="faq">
+    <div class="fq">
+      <div class="q">测试连接报「来源不被允许」</div>
+      <div class="a"><code>ALLOW_ORIGIN</code> 没设对。回第 4 步检查三件事：① 有没有 <code>https://</code>；② 有没有多写路径或末尾斜杠；③ 改完<b>有没有再点一次 Deploy</b>。</div>
+    </div>
+    <div class="fq">
+      <div class="q">报「Worker 还没配置 API_KEY」</div>
+      <div class="a">变量名必须<b>完全等于</b> <code>API_KEY</code>（全大写、下划线），类型要选 <b>Secret</b>，改完要<b>重新 Deploy</b>。</div>
+    </div>
+    <div class="fq">
+      <div class="q">报「模型不在白名单内」</div>
+      <div class="a">模型名写错了。填 <code>glm-4v-flash</code>。想用别的模型，就在 Worker 里加一个 <code>ALLOW_MODELS</code> 变量，把模型名逗号分隔列进去。</div>
+    </div>
+    <div class="fq">
+      <div class="q">报「Key 不对」</div>
+      <div class="a">说明 Worker 通了，但智谱拒绝了 Key。检查第 1 步的 Key 有没有复制完整、有没有多余空格。也可以在智谱后台确认 Key 还有效。</div>
+    </div>
+    <div class="fq">
+      <div class="q">识食里 API 地址到底要不要带 /chat/completions？</div>
+      <div class="a"><b>不要带。</b>只写到 <code>https://xxx.workers.dev</code> 就行。识食会自己拼上 <code>/chat/completions</code> —— 带上反而会变成 <code>.../chat/completions/chat/completions</code>，然后 404。</div>
+    </div>
+    <div class="fq">
+      <div class="q">担心别人拿我的地址刷</div>
+      <div class="a">已经做了两层防护：<b>来源校验</b>（只有你的站点能调）和<b>模型白名单</b>（只能用便宜的模型）。想再加一层，可以在 Cloudflare 的 <b>Security → WAF → Rate limiting rules</b> 里加一条「同一 IP 每分钟最多 10 次」，免费额度内够用。</div>
+    </div>
+    <div class="fq">
+      <div class="q">用了代理，我的照片会经过第三方吗？</div>
+      <div class="a">会 —— 照片会经过<b>你自己的</b> Worker 转发给模型厂商。Worker 只是转发，不落盘、不记录。<br><br>
+        但如果你对隐私有要求，<b>就继续用直连 + 自己填 Key</b> —— 那样照片只在你和模型厂商之间传输，不多一跳。
+        <b>这是取舍，不是「代理更好」。</b></div>
+    </div>
+    <div class="fq">
+      <div class="q">以后想换成通义千问 / OpenAI</div>
+      <div class="a">在 Worker 里加两个变量：<code>UPSTREAM</code> = 新厂商的地址（如 <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>），
+        <code>API_KEY</code> 换成新厂商的 Key，<code>ALLOW_MODELS</code> 加上新模型名。识食那边不用改。</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    识食 · AI 饮食管家 — 识别代理部署指南<br>
+    <span style="font-size:12px">本页代码从 <code>proxy/worker.js</code> 实时读取，永远和仓库一致</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var el = document.getElementById('workerCode');
+  var btn = document.getElementById('copyBtn');
+  fetch('worker.js').then(function(r){
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(function(t){
+    el.textContent = t;
+    btn.textContent = '复制全部';
+  }).catch(function(e){
+    el.textContent = '读取失败（' + e.message + '）。请直接打开仓库里的 proxy/worker.js 复制。';
+    btn.style.display = 'none';
+  });
+  btn.addEventListener('click', function(){
+    var t = el.textContent;
+    var done = function(){ btn.textContent = '已复制 ✓'; setTimeout(function(){ btn.textContent = '复制全部'; }, 2000); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done).catch(function(){ fallback(); });
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(err){ btn.textContent = '请手动全选复制'; }
+      document.body.removeChild(ta);
+    }
+  });
+})();
+</script>
+</body>
+</html>
