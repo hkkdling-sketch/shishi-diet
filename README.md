@@ -52,6 +52,8 @@
 
 **如果不想每台设备都填一次**，仓库里带了现成方案：把 Key 放到一个免费的
 Cloudflare Worker 里（`proxy/` 目录，含完整代码和 5 分钟部署步骤）。
+
+> 📖 部署图文步骤：**<https://hkkdling-sketch.github.io/shishi-diet/proxy/>**（带「复制代码」按钮）
 客户端只填代理地址、**Key 留空**，之后所有设备永久免配置。
 
 > 代价：照片会经过你的 Worker 转发。对隐私有要求就继续用直连 + 自己填 Key —— 这是明确的取舍。
@@ -242,6 +244,9 @@ Key 只存本机 `localStorage`，不会上传到任何地方。
 ├── guide/          # 手机上手指南页
 ├── research/       # 行业调研报告
 ├── proxy/          # 可选的拍照识别代理（Cloudflare Worker，免去每台设备填 Key）
+│   ├── index.html  #   部署图文步骤（带复制按钮，代码实时读取 worker.js）
+│   ├── worker.js   #   Worker 源码
+│   └── README.md   #   部署说明
 └── _build/         # 构建与测试脚本（非运行时依赖，可删）
     ├── new.css / new_body.html / new_app.js   # 分段源文件
     ├── assemble.py                            # 三文件拼回 index.html
@@ -294,6 +299,12 @@ node _build/edge-adapt.js
 # 接口配置：服务商猜测、错误提示翻译、无 Key 模式、连接测试（32 条断言）
 node _build/edge-api.js
 
+# 代理 Worker：CORS 预检、来源校验、模型白名单、错误透传（37 条断言，需 .mjs）
+node _build/test-worker.mjs
+
+# 代理部署页：双主题、代码与源码逐字一致、复制按钮可用
+node _build/render-proxy.js
+
 # 真实浏览器：双主题截图、控制台错误、对比度、首屏可见性（需 playwright）
 node _build/render.js
 
@@ -301,7 +312,7 @@ node _build/render.js
 node _build/render-guide.js
 ```
 
-全部通过才算改动合格。当前合计 **322 条断言 + 浏览器端到端选图测试**。覆盖的关键断言：
+全部通过才算改动合格。当前合计 **359 条断言 + 浏览器端到端选图测试**。覆盖的关键断言：
 
 - 宏量营养素回算热量与目标偏差 **≤ 4 kcal**（训练日与休息日都要过）
 - 蛋白质占比 **≤ 35%** 总热量
@@ -335,6 +346,10 @@ node _build/render-guide.js
 - 接口配置：地址为空但 Key 是智谱格式 → 自动补地址；认不出时**不瞎填**
 - 接口配置：**无 Key 模式不再误报「先填 API Key」**；报错信息按 401/404/429/网络错误分别翻译
 - 代码里**不得使用浏览器专有的全局 `event`**（非浏览器环境会 ReferenceError）
+- 代理 Worker：**陌生来源必须被 403 拦住**（这是防白嫖的唯一屏障）
+- 代理 Worker：**上游 401/错误必须原样透传**，且错误响应也要带 CORS 头（否则前端读不到）
+- 代理 Worker：模型白名单外的模型必须被拒，防止拿你的 Key 跑贵模型
+- 代理部署页展示的代码必须与 `proxy/worker.js` **逐字一致**（页面实时读取，不会过期）
 - 无原生 `alert` / `confirm` / `prompt` 调用
 - 正文对比度：浅色 ≥ 4.5:1、深色 ≥ 7:1；390px 视口零横向溢出
 - **库存概览卡与缺口分析卡必须在首屏内**（防止关键信息被挤下去）
