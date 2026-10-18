@@ -624,6 +624,19 @@ nav button{font-size:10px;padding:8px 0 7px}
   flex-shrink:0;width:26px;height:26px;padding:0;border-radius:50%;
   background:transparent;color:var(--ink-3);font-size:13px;font-weight:400;
 }
+/* 份量按钮 —— 把「这到底多少克」从空想变成一次点击。
+   高度 38px：够手指点，又不至于把表单顶下去。 */
+.plist{display:flex;flex-wrap:wrap;gap:6px;margin-top:1px}
+.pbtn{
+  display:inline-flex;align-items:baseline;gap:5px;
+  min-height:38px;padding:8px 12px;
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--surface-2);color:var(--ink);
+  font:inherit;font-size:13px;cursor:pointer;
+}
+.pbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.pbtn:active{background:var(--accent-soft)}
+.pg{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .instbar .instx:active{background:var(--line)}
 </style>
 <body>
@@ -750,6 +763,7 @@ nav button{font-size:10px;padding:8px 0 7px}
         <div class="fld"><label>饱和脂肪 g/100g</label><input id="rSf" type="number" inputmode="decimal" placeholder="选填"></div>
         <div class="fld"><label>糖 g/100g</label><input id="rSg" type="number" inputmode="decimal" placeholder="选填"></div>
         <div class="fld"><label>总克重 (g)</label><input id="rG" type="number" inputmode="decimal" placeholder="500"></div>
+        <div id="portionBox" style="grid-column:1/-1"></div>
       </div>
       <button class="btn-g" onclick="aiToLog(false)">记入今日 · 并扣减库存</button>
       <div class="grid2" style="margin-top:8px">
@@ -932,6 +946,133 @@ const FOODS=[
 ];
 const CAT_LABEL={protein:"蛋白质类",staple:"主食",veg:"蔬菜",fruit:"水果",fat:"油脂坚果",other:"其他"};
 const CAT_ORDER=["protein","staple","veg","fruit","fat","other"];
+
+/* ================= 常见份量 =================
+   为什么要有这张表：
+     拍照能认出「这是西兰花」，但认不出「这一颗多重」—— 重量取决于
+     镜头距离、参照物、切没切，纯视觉估算在研究领域都要靠盘子直径做
+     尺度参照，误差仍有 20–30%。而用户自己知道自己拿的是「一颗」还是
+     「一小朵」，这个判断比任何模型都准。
+   所以重量这一步交给用户，用日常单位表达，再换算成克。
+
+   克数口径：以《中国食物成分表》的常见可食部重量为准，取整到好记的数。
+   匹配不到具体食材时，按分类退回通用单位（见 PORT_FALLBACK）。 */
+const PORTIONS={
+  /* 蔬菜 */
+  "西兰花":[["一小朵",25],["半颗",150],["一颗",300]],
+  "菜花/花椰菜":[["一小朵",25],["半颗",200],["一颗",400]],
+  "菠菜":[["一把",100],["一碟",150]],
+  "生菜":[["一片",15],["一颗",200]],
+  "黄瓜":[["半根",100],["一根",200]],
+  "西红柿":[["半个",75],["一个",150]],
+  "胡萝卜":[["半根",50],["一根",100]],
+  "洋葱":[["半个",75],["一个",150]],
+  "大白菜":[["一片",30],["四分之一颗",250]],
+  "娃娃菜":[["一颗",200]],
+  "冬瓜":[["一块",200]],
+  "茄子":[["一根",200]],
+  "芹菜(茎)":[["一根",30],["一把",100]],
+  "芦笋":[["一根",15],["一把",100]],
+  "秋葵":[["一根",10],["一把",100]],
+  "蘑菇(鲜)":[["一个",20],["一盒",200]],
+  "金针菇(鲜)":[["一把",100],["一包",200]],
+  "海带(鲜)":[["一份",100]],
+  "豆芽(绿豆芽)":[["一把",100]],
+  "西葫芦":[["一根",250]],
+  "南瓜":[["一块",150]],
+  "韭菜":[["一把",80]],
+  "青椒(尖椒)":[["一个",30]],
+  "彩椒/甜椒":[["一个",120]],
+  "苦瓜":[["一根",200]],
+  "空心菜":[["一把",100]],
+  "油麦菜":[["一把",100]],
+  "莲藕(生)":[["一节",200]],
+  /* 水果 */
+  "苹果":[["半个",100],["一个",200]],
+  "香蕉":[["一根",100]],
+  "橙子":[["一个",200]],
+  "柚子":[["两瓣",100]],
+  "蓝莓":[["一小盒",125]],
+  "树莓":[["一小盒",125]],
+  "猕猴桃":[["一个",85]],
+  "西瓜":[["一块",200]],
+  "草莓":[["5 颗",75],["一小碗",150]],
+  "葡萄":[["10 颗",50],["一串",200]],
+  "火龙果":[["一个",350]],
+  "火龙果(红心)":[["一个",350]],
+  "牛油果":[["半个",100],["一个",200]],
+  "桃子":[["一个",200]],
+  "樱桃":[["10 颗",80]],
+  "梨":[["一个",200]],
+  "芒果":[["一个",250]],
+  "圣女果":[["5 个",60],["10 个",120]],
+  /* 肉蛋豆 */
+  "鸡胸肉(生)":[["半块",80],["一块",150]],
+  "鸡蛋(全蛋)":[["一个",50]],
+  "鸡蛋白":[["一个",33]],
+  "鸡蛋黄":[["一个",17]],
+  "鸡腿肉(生)":[["一个",100]],
+  "鸡翅(生)":[["一个",40],["三个",120]],
+  "牛肉(瘦,生)":[["一片",100],["一盒",250]],
+  "猪瘦肉(生)":[["一片",100]],
+  "猪肉(里脊,生)":[["一片",100]],
+  "三文鱼(生)":[["一块",120]],
+  "鳕鱼(生)":[["一块",120]],
+  "基围虾(生)":[["5 只",60],["10 只",120]],
+  "金枪鱼(水浸罐头)":[["一罐",150]],
+  "猪肝(生)":[["一片",50]],
+  "牛奶(全脂)":[["一杯",250]],
+  "酸奶(无糖)":[["一杯",150]],
+  "希腊酸奶(无糖)":[["一杯",150]],
+  "豆浆(无糖)":[["一杯",250]],
+  "豆腐(北)":[["半块",100],["一块",200]],
+  "豆腐干":[["一块",40],["三块",120]],
+  "毛豆(鲜)":[["一把",60]],
+  "黄豆(干)":[["一把",30]],
+  /* 主食 */
+  "米饭(熟)":[["小碗",150],["一碗",200]],
+  "糙米饭(熟)":[["一碗",200]],
+  "馒头":[["一个",100]],
+  "面条(熟)":[["一碗",250]],
+  "意面(熟)":[["一份",250]],
+  "藜麦(熟)":[["一份",150]],
+  "全麦面包":[["一片",35],["两片",70]],
+  "白面包/吐司":[["一片",30]],
+  "燕麦片(干)":[["一份",40]],
+  "红薯/紫薯(生)":[["一个",200]],
+  "玉米(鲜)":[["一根",200]],
+  "土豆(生)":[["一个",150]],
+  "山药(生)":[["一段",200]],
+  /* 油脂坚果 */
+  "花生(炒)":[["一小把",20]],
+  "杏仁":[["10 颗",12],["一小把",25]],
+  "核桃":[["一个",8],["三个",24]],
+  "腰果":[["10 颗",15]],
+  "花生酱(无糖)":[["一勺",15]],
+  "橄榄油":[["一茶匙",5],["一汤匙",15]],
+  "花生油":[["一汤匙",15]],
+  "奇亚籽":[["一勺",12]],
+  "亚麻籽":[["一勺",10]],
+  "南瓜子":[["一小把",20]],
+  "葵花籽":[["一小把",20]],
+  /* 其他 */
+  "蜂蜜":[["一勺",15]],
+  "乳清蛋白粉":[["一勺",30]],
+  "黑巧克力(70%)":[["一块",10],["三块",30]],
+  "火腿肠":[["一根",45]],
+  "鸡胸肉肠(低脂)":[["一根",40]],
+  "木耳(干)":[["一小把",10]],
+  "魔芋/蒟蒻":[["一份",150]],
+};
+/** 匹配不到具体食材时的通用单位 —— 按分类给，总比让用户空想一个克数强 */
+const PORT_FALLBACK={
+  protein:[["一掌心",120],["一块",100],["100 g",100]],
+  staple:[["一碗",200],["一拳",100],["100 g",100]],
+  veg:[["一把",100],["一碟",150],["100 g",100]],
+  fruit:[["一个",150],["半个",80],["100 g",100]],
+  fat:[["一勺",10],["一小把",20],["15 g",15]],
+  other:[["一份",100],["半份",50],["100 g",100]]
+};
 
 /* 运动库：mode 决定输入方式
    dist —— 按「距离 + 时长」算，跑步/骑行/游泳/划船（位移型）
@@ -2287,6 +2428,61 @@ function bindPhotoInput(id){
 bindPhotoInput("photoCam");
 bindPhotoInput("photoLib");
 
+/* ---------- 份量助手 ----------
+   模型能认出「这是什么」，但认不出「有多少」—— 重量这一步交给用户，
+   用日常单位表达（一颗 / 一把 / 一块），再换算成克和营养。 */
+/** 按名称匹配常见份量：精确 → 双向包含（忽略括号后缀）→ 按分类兜底 */
+function portionsFor(name,cat){
+  const nm=String(name||"").trim();
+  // 空名字必须在这里挡掉：下面的包含判断里 "".indexOf 恒为 0，会误命中第一条
+  if(!nm)return PORT_FALLBACK[cat]||PORT_FALLBACK.other;
+  if(PORTIONS[nm])return PORTIONS[nm];
+  const bare=s=>s.replace(/\(.*?\)/g,"").trim();
+  for(const k of Object.keys(PORTIONS)){
+    const kb=bare(k);
+    if(kb&&(nm.indexOf(kb)>=0||kb.indexOf(nm)>=0))return PORTIONS[k];
+  }
+  return PORT_FALLBACK[cat]||PORT_FALLBACK.other;
+}
+/** 渲染份量按钮。识别完成后、或用户改了名称/分类时调用 */
+function renderPortions(){
+  const box=$("portionBox");if(!box)return;
+  const nm=$("rN")?$("rN").value.trim():"";
+  const cat=$("rCat")?$("rCat").value:"other";
+  const list=portionsFor(nm,cat);
+  box.innerHTML=`<div class="plist">${list.map(([u,g])=>
+    `<button type="button" class="pbtn" onclick="pickPortion(${g})">${esc(u)}<span class="pg">${g} g</span></button>`
+  ).join("")}</div><div class="hint" id="portionTip" style="margin-top:7px"></div>`;
+  updatePortionTip();
+}
+/** 点份量按钮：填克重并刷新换算提示 */
+function pickPortion(g){
+  const el=$("rG");if(el)el.value=g;
+  updatePortionTip();
+}
+/** 换算提示：这一份多重、含多少膳食纤维、约多少热量 */
+function updatePortionTip(){
+  const tip=$("portionTip");if(!tip)return;
+  const val=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
+  const g=val("rG"),fb=val("rFb"),k=val("rK");
+  if(g<=0){tip.innerHTML=`<span>选一个份量，或直接在上面填克重</span>`;return}
+  const fbg=Math.round(fb*g/10)/10,kg=Math.round(k*g/100);
+  const parts=[`这份 ${g} g`];
+  if(fb>0)parts.push(`膳食纤维 <b>${fbg} g</b>`);
+  if(k>0)parts.push(`约 ${kg} kcal`);
+  tip.innerHTML=`<span>${parts.join(" · ")}</span>`;
+}
+/* 提示要跟着输入走：改名字可能换一套单位，改克重/纤维要立刻重算 */
+["rN","rCat"].forEach(id=>{
+  const el=$(id);if(!el)return;
+  const h=()=>renderPortions();
+  el.addEventListener("input",h);el.addEventListener("change",h);
+});
+["rG","rFb","rK"].forEach(id=>{
+  const el=$(id);if(!el)return;
+  el.addEventListener("input",updatePortionTip);
+});
+
 /** 渲染已选图片：缩略图网格 + 每张可单独删 + 再加一张 */
 function renderPrev(){
   const box=$("prevBox");if(!box)return;
@@ -2318,6 +2514,7 @@ function clearPhoto(){
 }
 function openManual(){
   $("scanResult").style.display="block";
+  renderPortions();
   $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function applyPreset(){
@@ -2448,6 +2645,7 @@ async function doScan(){
     put("rFb",j.fiber);put("rNa",j.sodium);put("rSf",j.satfat);put("rSg",j.sugar);
     if($("rCat"))$("rCat").value=guessCat(j.name||"");   // 自动归类，用户可改
     $("scanResult").style.display="block";
+    renderPortions();
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功（用了 ${n} 张图），请核对数值</span>`;
     $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
