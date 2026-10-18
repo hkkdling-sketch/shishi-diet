@@ -190,7 +190,7 @@ Cloudflare Worker 里（`proxy/` 目录，含完整代码和 5 分钟部署步�
 | 项目 | 说明                                                           |
 | -- | ------------------------------------------------------------ |
 | 架构 | **单文件 PWA**，`index.html` 内联全部 CSS/JS，零运行时依赖                  |
-| 体积 | 186 KB（含 109 条食物数据 + 43 个内联 SVG 图标）                      |
+| 体积 | 194 KB（含 109 条食物数据 + 常见份量表 + 43 个内联 SVG 图标）         |
 | 离线 | Service Worker `stale-while-revalidate`，秒开 + 后台静默更新          |
 | 安装 | 捕获 `beforeinstallprompt` 做**应用内一键安装**；iOS 走图文步骤降级         |
 | 图标 | **内联 SVG**，不是 emoji（emoji 在 iOS / Android / Windows 上渲染差异极大） |
