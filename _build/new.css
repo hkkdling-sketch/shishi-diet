@@ -25,9 +25,15 @@
   --d-protein:#4a6fa5;
   --d-fat:#c8873f;
   --d-carb:#7c5c9e;
+  --d-fiber:#5c8a72;
+  /* 限量项配色（钠/饱和脂肪/糖）—— 与「目标项」区分开，但不用警告红，
+     因为「接近上限」是常态而非错误 */
+  --d-sodium:#5d7f9e;
+  --d-satfat:#8a7b52;
+  --d-sugar:#a06b7e;
   /* 间距与形状 */
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
-  --track:#eceae4;
+  --track:#d5d1c7;
 }
 @media(prefers-color-scheme:dark){
   :root{
@@ -37,8 +43,9 @@
     --accent:#7fb894; --accent-ink:#9ac9ab; --accent-soft:#1d2a22;
     --danger:#e0736a; --danger-soft:#2c1e1c;
     --warn:#d9a441; --warn-soft:#2b2418;
-    --d-protein:#7fa3d4; --d-fat:#dcae72; --d-carb:#b096d4;
-    --track:#2a2925;
+    --d-protein:#7fa3d4; --d-fat:#dcae72; --d-carb:#b096d4; --d-fiber:#8fc4a4;
+    --d-sodium:#8fb4d0; --d-satfat:#c2ae7e; --d-sugar:#d0a0b0;
+    --track:#3c3a33;
   }
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -123,6 +130,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .btn-g{background:var(--accent);color:#fff;width:100%}
 .btn-g:active{background:var(--accent-ink)}
 .btn-o{background:transparent;color:var(--accent);border:1px solid var(--accent);width:100%}
+/* 链接式按钮：外观同 .btn-g / .btn-o，但用于 <a>，保持可点击区域 */
+a.linkbtn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  box-sizing:border-box;width:100%;padding:12px 16px;border-radius:var(--r-md);
+  font-size:14.5px;font-weight:600;text-decoration:none;cursor:pointer;
+  transition:transform .1s,background .15s;
+}
+a.linkbtn:active{transform:scale(.975)}
+a.linkbtn.out{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+a.linkbtn.solid{background:var(--accent);color:#fff;border:1px solid var(--accent)}
 .btn-s{background:var(--surface-2);color:var(--ink);padding:9px 12px;font-size:13px;width:auto;border:1px solid var(--line)}
 .btn-r{background:var(--danger-soft);color:var(--danger);padding:9px 12px;font-size:13px;width:auto}
 .btnrow{display:flex;gap:8px}
@@ -134,22 +151,46 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .bar{height:6px;background:var(--track);border-radius:4px;overflow:hidden;margin:5px 0 2px}
 .bar>i{display:block;height:100%;border-radius:4px;transition:width .55s cubic-bezier(.4,0,.2,1)}
 
-/* ---------- 热量环 ---------- */
-.ring{
-  width:150px;height:150px;border-radius:50%;
-  background:conic-gradient(var(--rc) calc(var(--p)*1%),var(--track) 0);
-  display:grid;place-items:center;margin:6px auto 0;position:relative;
-}
-.ring::after{
-  content:"";position:absolute;inset:0;border-radius:50%;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.03);
-}
-.ring>div{
-  width:118px;height:118px;border-radius:50%;background:var(--surface);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.ring b{font-size:32px;font-weight:600;line-height:1.05;color:var(--ink)}
-.ring span{font-size:11px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em}
+/* ---------- 热量主指标：条形 + 数字 ----------
+   为什么不用环形图：NN/g 指出长度是最准确的视觉编码，角度/面积最差，
+   环形图还挖空更难读；Apple HIG 也把 Activity 圆环保留给健康三环，不宜挪用。
+   状态另给文字（还差 / 已超出），不单靠颜色 —— 约 4.5% 的人有色觉障碍。 */
+.kcalhero{padding:2px 0 4px}
+.kh-lab{font-size:12.5px;color:var(--ink-2);font-weight:500;margin-bottom:7px}
+.kh-num{display:flex;align-items:baseline;gap:7px;margin-bottom:9px}
+.kh-num b{font-size:38px;font-weight:600;line-height:1;letter-spacing:-.025em;
+  color:var(--ink);font-variant-numeric:tabular-nums}
+.kh-num em{font-style:normal;font-size:15px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kh-num .kh-u{font-size:12.5px;color:var(--ink-3);margin-left:-2px}
+.kh-bar{height:12px;background:var(--track);border-radius:6px;overflow:hidden}
+.kh-bar>i{display:block;height:100%;border-radius:6px;background:var(--accent);
+  transition:width .55s cubic-bezier(.4,0,.2,1)}
+.kcalhero.over .kh-bar>i{background:var(--warn)}
+.kh-foot{display:flex;align-items:baseline;gap:10px;margin-top:7px;
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kh-foot b{color:var(--ink-2);font-weight:600}
+.kh-foot span{margin-left:auto}
+.kcalhero.over .kh-foot b{color:var(--warn)}
+
+/* ---------- 限量项（钠 / 饱和脂肪 / 糖）：条形朝上限填充 ---------- */
+.limlist{margin-top:2px}
+.limrow{padding:10px 0;border-bottom:1px solid var(--line)}
+.limrow:last-child{border-bottom:none;padding-bottom:0}
+.limrow .lh{display:flex;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:6px}
+.limrow .gl{color:var(--ink-2);font-weight:500;display:flex;align-items:center;gap:5px}
+.limrow .gl i{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.limrow .lh b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.limrow .lh b em{font-style:normal;font-weight:400;color:var(--ink-3);font-size:11.5px}
+.limrow .lbar{height:8px;background:var(--track);border-radius:4px;overflow:hidden}
+.limrow .lbar>i{display:block;height:100%;border-radius:4px;transition:width .55s cubic-bezier(.4,0,.2,1)}
+.limrow .lf{font-size:11.5px;color:var(--ink-3);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ---------- 自适应 TDEE 明细行 ---------- */
+.adaptrows{margin-top:4px;border-top:1px solid var(--line)}
+.adaptrows .ar{display:flex;align-items:baseline;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px}
+.adaptrows .ar span{color:var(--ink-2)}
+.adaptrows .ar b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
 
 /* ---------- 宏量营养素行 ---------- */
 .mac{display:grid;grid-template-columns:42px 1fr 92px;align-items:center;gap:10px;margin-top:12px;font-size:12.5px}
@@ -222,6 +263,23 @@ nav button.on .ic-svg{transform:translateY(-1px)}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}}
 
 img.prev{width:100%;border-radius:var(--r-md);margin:10px 0;border:1px solid var(--line)}
+
+/* ---------- 已选图片缩略图网格（支持多张，每张可单独删） ---------- */
+.thumbgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;margin:12px 0 0}
+.thumb{position:relative;aspect-ratio:1;border-radius:var(--r-md);overflow:hidden;
+  border:1px solid var(--line);background:var(--surface-2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .thumbx{
+  position:absolute;top:3px;right:3px;width:22px;height:22px;padding:0;
+  border-radius:50%;background:rgba(0,0,0,.58);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.thumb .thumbx:active{background:rgba(0,0,0,.8)}
+.thumb .thumbi{
+  position:absolute;left:4px;bottom:3px;font-size:11px;font-weight:600;
+  background:rgba(0,0,0,.58);color:#fff;padding:0 5px;border-radius:4px;
+  font-variant-numeric:tabular-nums;line-height:1.6;
+}
 
 /* ---------- 空状态 ---------- */
 .empty{
@@ -393,4 +451,168 @@ a{color:var(--accent)}
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]) .ftab.on em{background:rgba(255,255,255,.2)}
 }
+
+/* ============================================================
+   Phase D：训练自定义 / 日程日历 / 训练日营养 / 外食 / 实时扣减
+   ============================================================ */
+
+/* ---------- 今日：日期标签行 ---------- */
+.daytag{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.daytag .chip{gap:5px;padding:4px 10px}
+.daytag .btn-s{padding:4px 10px;font-size:11.5px}
+
+/* ---------- 实时扣减清单 ---------- */
+.gaplist .gaprow b{font-feature-settings:"tnum"}
+
+/* ---------- 今日日程卡 ---------- */
+.plrow{display:flex;align-items:center;gap:11px}
+.plrow.mini{padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.pl-ic{width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.plrow .nm{font-size:14px;font-weight:600}
+.plrow .dt{font-size:11.5px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* ---------- 训练记录抽屉 ---------- */
+.exhint{display:flex;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--ink-3);
+  line-height:1.55;margin:-4px 0 12px}
+.exhint .ic-svg{flex-shrink:0;margin-top:2px}
+.exhint b{color:var(--accent);font-weight:600}
+.expace{display:flex;flex-direction:column;justify-content:center;
+  min-height:44px;padding:0 13px;border:1px dashed var(--line-2);border-radius:var(--r-md);
+  background:var(--surface-2)}
+.pacev{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--accent)}
+.paces{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.exprev{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;
+  padding:12px 14px;background:var(--accent-soft);border-radius:var(--r-md);margin-top:4px}
+.exk{font-size:23px;font-weight:650;color:var(--accent);font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em}
+.exk::before{content:"−"}
+.exklab{font-size:12px;color:var(--accent-ink)}
+.exhow{margin-left:auto;font-size:11.5px;color:var(--ink-3);
+  background:var(--surface);padding:3px 9px;border-radius:6px}
+
+/* ---------- 训练日 / 休息日对比表 ---------- */
+.dual{margin-top:14px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.dual-head,.dual-row{display:grid;grid-template-columns:1fr auto 20px auto;align-items:center;
+  gap:8px;padding:9px 12px}
+.dual-head{background:var(--surface-2);padding:7px 12px}
+.dual-h{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-align:right;font-weight:600}
+.dual-h.hot{color:var(--accent)}
+.dual-row{border-top:1px solid var(--line)}
+.dual-lab{font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column}
+.dual-lab em{font-style:normal;font-size:10.5px;color:var(--ink-3);margin-top:1px}
+.dual-v{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.dual-v.hot{color:var(--accent)}
+.dual-arrow{text-align:center;color:var(--line-2);font-size:12px}
+/* 限量项分组：与目标项视觉上分开，且数字用中性色（不用 accent，避免像「要冲上去」） */
+.dual-sep{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;
+  background:var(--surface-2);padding:6px 12px;border-top:1px solid var(--line)}
+.dual-row.cap .dual-v{color:var(--ink-2)}
+.dual-row.cap .dual-v.hot{color:var(--ink-2)}
+
+/* ---------- 自定义项目列表 ---------- */
+.mylist{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)}
+
+/* ---------- 训练页 Hero ---------- */
+.trainhero{padding:18px 16px}
+.th-top{display:flex;align-items:center;gap:14px}
+.th-top>div:first-child{flex:1;min-width:0}
+.th-lab{font-size:11.5px;color:var(--ink-3);letter-spacing:.05em;font-weight:500}
+.th-big{font-size:28px;font-weight:650;letter-spacing:-.025em;line-height:1.15;margin-top:2px}
+.th-sub{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+.th-badge{width:58px;height:58px;border-radius:16px;flex-shrink:0;
+  background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.th-acts{display:flex;gap:8px;margin-top:16px}
+.th-acts button{flex:1}
+
+/* ---------- 周统计 ---------- */
+.statrow{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:11px;overflow:hidden}
+.statcell{flex:1;background:var(--surface);padding:12px 6px;text-align:center}
+.statcell b{display:block;font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.statcell span{font-size:10.5px;color:var(--ink-3)}
+
+/* ---------- 月历 ---------- */
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.calhead b{font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center}
+.calhead .calcount{font-size:10.5px;font-weight:400;color:var(--ink-3);margin-top:1px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.caldow{text-align:center;font-size:11px;color:var(--ink-3);padding:2px 0 6px;font-weight:500}
+.calcell{
+  position:relative;aspect-ratio:1;border-radius:9px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:12.5px;font-variant-numeric:tabular-nums;cursor:pointer;
+  border:1px solid transparent;transition:background .15s,border-color .15s;
+}
+.calcell b{font-weight:500;line-height:1}
+.calcell.empty{cursor:default}
+.calcell:not(.empty):active{background:var(--surface-2)}
+.calcell.today{border-color:var(--accent);font-weight:650}
+.calcell.today b{font-weight:650;color:var(--accent)}
+.calcell.sel{background:var(--accent-soft)}
+.calcell.plan{background:var(--accent-soft)}
+.calcell.rest{background:var(--surface-2)}
+.calcell .mk{position:absolute;bottom:5px;width:14px;height:3px;border-radius:2px}
+.calcell .mk.plan{background:var(--accent);opacity:.55}
+.calcell .mk.rest{background:var(--ink-3);opacity:.4}
+.calcell .mk.done{background:var(--accent)}
+.callegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:11px;color:var(--ink-3)}
+.callegend span{display:flex;align-items:center;gap:5px}
+.callegend .mk{width:12px;height:3px;border-radius:2px}
+.callegend .mk.plan{background:var(--accent);opacity:.55}
+.callegend .mk.rest{background:var(--ink-3);opacity:.4}
+.callegend .mk.done{background:var(--accent)}
+
+/* ---------- 分段控件 ---------- */
+.seg{display:flex;gap:6px}
+.seg button{flex:1;background:var(--surface);border:1px solid var(--line-2);
+  color:var(--ink-2);padding:10px;font-size:13.5px;border-radius:var(--r-md)}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---------- 日程编辑区 ---------- */
+.pl-edit{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.calwrap{margin-bottom:4px}
+
+/* ---------- 5 个导航项时字号收紧 ---------- */
+nav button{font-size:10px;padding:8px 0 7px}
+
+/* ---------- 「装到桌面」卡：要比普通卡醒目一点，但不喧宾夺主 ---------- */
+.instcard{border-color:var(--accent);background:var(--accent-soft)}
+.instcard h3{color:var(--accent)}
+.instcard h3 svg{color:var(--accent)}
+.instcard .hint{color:var(--ink)}
+.instcard .btn-g{margin-top:12px}
+
+/* 今日页那条：细横幅，一行高，绝不能把「今日还差」挤出首屏 */
+.instbar{
+  display:flex;align-items:center;gap:9px;
+  background:var(--accent-soft);border:1px solid var(--accent);
+  border-radius:var(--r-md);padding:7px 10px;margin-bottom:12px;
+  font-size:12.5px;color:var(--ink);line-height:1.35;
+}
+.instbar svg{color:var(--accent);flex-shrink:0}
+.instbar .tx{flex:1;min-width:0}
+.instbar .btn-s{padding:5px 11px;font-size:12px;flex-shrink:0;
+  background:var(--accent);color:#fff;border-color:var(--accent)}
+.instbar .instx{
+  flex-shrink:0;width:26px;height:26px;padding:0;border-radius:50%;
+  background:transparent;color:var(--ink-3);font-size:13px;font-weight:400;
+}
+/* 份量按钮 —— 把「这到底多少克」从空想变成一次点击。
+   高度 38px：够手指点，又不至于把表单顶下去。 */
+.plist{display:flex;flex-wrap:wrap;gap:6px;margin-top:1px}
+.pbtn{
+  display:inline-flex;align-items:baseline;gap:5px;
+  min-height:38px;padding:8px 12px;
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--surface-2);color:var(--ink);
+  font:inherit;font-size:13px;cursor:pointer;
+}
+.pbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.pbtn:active{background:var(--accent-soft)}
+.pg{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.instbar .instx:active{background:var(--line)}
 </style>
