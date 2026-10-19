@@ -248,6 +248,26 @@ sec('5. doScan：有地址无 Key 时不再要求填 Key');
     ok(!/豆包[^<]*可直连/.test(html), '不能把豆包写成可直连');
   }
 
+  /* ============ 7c. 预设：通义 ============ */
+  // 2026-10-19 用真 Key 实测：qwen-vl-plus / qwen-vl-max 都返回
+  //   404 model_not_found（已下线），当前可用的是 qwen3-vl-plus。
+  // 这条断言就是防止哪天又写回一个已经死掉的模型名。
+  sec('7c. 预设含「通义 Qwen-VL」');
+  {
+    const b = boot();
+    b.api.el('apiPreset').value = 'qwen';
+    b.api.el('apiBase').value = '';
+    b.api.el('apiModel').value = '';
+    b.api.applyPreset();
+    const base = b.api.el('apiBase').value;
+    const model = b.api.el('apiModel').value;
+    ok(base === 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      '地址是北京地域的 compatible-mode（实际：' + base + '）');
+    ok(!/dashscope-intl/.test(base), '不能用国际站域名，Key 不通用');
+    ok(model === 'qwen3-vl-plus', '模型名是 qwen3-vl-plus（实际：' + model + '）');
+    ok(model !== 'qwen-vl-plus' && model !== 'qwen-vl-max', '不能用已下线的旧模型名');
+  }
+
   /* ============ 8. 接口不该用全局 event ============ */
   sec('8. 代码健壮性：不依赖浏览器专有的全局 event');
   {
