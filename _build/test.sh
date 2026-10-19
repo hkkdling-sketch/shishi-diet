@@ -44,7 +44,7 @@ if $ND _build/smoke.js >/dev/null 2>&1; then say "  ✓ smoke.js"; else say "  �
 # ---------- 3. 断言套件（显式列出，不用 glob）----------
 section "断言套件"
 SUITES="edge3.js edge-inv.js edge-undo.js edge-habit.js edge-train.js
-        edge-install.js edge-adapt.js edge-api.js edge-portion.js test-worker.mjs"
+        edge-install.js edge-adapt.js edge-api.js edge-portion.js edge-multi.js test-worker.mjs"
 TOTAL=0
 for f in $SUITES; do
   OUT=$($ND "_build/$f" 2>&1)
