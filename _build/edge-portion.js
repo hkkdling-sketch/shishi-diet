@@ -112,5 +112,13 @@ $('rN').value = '没听说过的东西';
 api.renderPortions();
 ok($('portionBox').innerHTML.indexOf('一把') >= 0, '认不出也能按分类给出通用份量');
 
+/* ---------- 5. 吃掉弹层的快捷按钮也要用份量单位 ---------- */
+// 真实事故（流程评审实测）：库存 2000g 鸡胸肉时，快捷按钮是
+// 500/1000/1500/2000g —— 按库存百分比算的。用户想记 150g，
+// 最近选项 1000g，误差 +850g，按钮完全没用。
+ok(!/it\.g\s*\*\s*0\.25/.test(js), '吃掉弹层不能用库存 25% 当快捷选项');
+ok(/portionsFor\(it\.n\s*,\s*it\.cat\)/.test(js), '吃掉弹层要用份量表给快捷选项');
+ok(js.includes('if(!quicks.length)'), '库存比最小份量还少时要有「全部」兜底');
+
 console.log(`通过 ${pass} / 失败 ${fail}`);
 if (fail) process.exit(1);
