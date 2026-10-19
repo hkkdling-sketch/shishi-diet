@@ -888,7 +888,7 @@ nav button{font-size:10px;padding:8px 0 7px}
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-19";
+const BUILD="2026-10-19b";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -2585,6 +2585,8 @@ function apiErrorText(err,res){
     return "Key 不对或没有权限。检查是否复制完整、有没有多余空格。";
   if(/400/.test(m)){
     // 这是最容易被误判成「模型不对/版本旧」的一类错：其实是图没发对
+    if(/image length and width|must be larger than/i.test(m))
+      return "图片尺寸太小（宽高要大于 10 像素）。不是 Key 的问题，换张正常照片就行。";
     if(/URL does not appear to be valid|InvalidParameter|invalid_parameter/i.test(m))
       return "图片被判格式无效（400）。多半是 HEIC 照片或图太大 —— 用相机重拍一张，或先把图转成 JPG 再选。";
     return "请求被拒绝（400）：" + m.slice(0, 90);
@@ -2603,8 +2605,10 @@ async function testApi(){
   const model=$("apiModel").value.trim()||"glm-4v-flash";
   const key=$("apiKey").value.trim();
   if(!base){out.innerHTML=`<div class="hint" style="color:var(--danger)"><span>先填 API 地址</span></div>`;if(btn)btn.disabled=false;return}
-  // 1×1 透明 PNG：最小的合法图片，用来验证「这个模型确实能看图」
-  const px="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  // 64×64 纯色 PNG（136 字节）。**别改回 1×1** —— 通义对宽高有下限，
+  // 1×1 会回「height:1 or width:1 must be larger than 10」，
+  // 用户看到 400 会以为 Key 或地址填错了，其实只是占位图太小。
+  const px="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAT0lEQVR42u3PQQkAAAgEsOtlELuY3gi+hcEKLDX9WgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQELgse8sDx+HzoIgAAAABJRU5ErkJggg==";
   const t0=Date.now();
   try{
     const res=await fetch(base+"/chat/completions",{
