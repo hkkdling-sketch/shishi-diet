@@ -142,5 +142,13 @@ api.aiToStock();
 ok(api.S.inv.length === 3, '三条都要加入库存（实际 ' + api.S.inv.length + '）');
 ok(api.S.inv.every(i => i.id && i.n && i.g > 0), '每条库存项都要有 id/名称/克数');
 
+/* ---------- 10. 主操作不该绑库存 ---------- */
+// 一个人吃饭，「记吃了什么」和「家里还剩什么」是两件事。
+// 主按钮必须只做前者 —— 否则每记一顿都要先维护库存。
+ok(html.includes('onclick="aiToLog(true)">记入今日'), '主按钮是「记入今日」，默认不碰库存');
+ok(!html.includes('就这样记 · 并扣减库存'), '不该再有「记一笔就必须扣库存」的主按钮');
+ok(html.includes('onclick="aiToLog(false)">记入并扣库存'), '扣库存降为次要选项，想用再用');
+ok(html.includes('记录吃了什么不用来这'), '库存页要说明自己不是日常记录入口');
+
 console.log(`通过 ${pass} / 失败 ${fail}`);
 if (fail) process.exit(1);
