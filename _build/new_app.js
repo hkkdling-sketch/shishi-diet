@@ -1638,6 +1638,13 @@ function openManual(){
 }
 function applyPreset(){
   const P={
+    // 2026-10 在真浏览器里实测过四家（对照 jsdelivr 确认有网）：
+    //   通义   → POST 响应带 Access-Control-Allow-Origin: *，能直连
+    //   豆包   → 预检回 CORS 头，但 POST 响应一个都不带，浏览器必拦
+    //   智谱   → 预检就不回 CORS 头，浏览器在预检阶段就拦掉
+    // 所以「豆包免费又能识图」是真的，但纯前端连不上，必须经 proxy/worker.js 中转。
+    // 判断依据不能只看 OPTIONS —— 预检放行不等于实际响应放行，这是两个检查。
+    doubao:["https://ark.cn-beijing.volces.com/api/v3","doubao-seed-2-1-lite-260915"],
     zhipu:["https://open.bigmodel.cn/api/paas/v4","glm-4v-flash"],
     qwen:["https://dashscope.aliyuncs.com/compatible-mode/v1","qwen-vl-plus"],
     openai:["https://api.openai.com/v1","gpt-4o-mini"],
@@ -1647,6 +1654,10 @@ function applyPreset(){
   if($("apiPreset").value==="proxy"){
     $("apiBase").focus();
     toast("填你自建代理的地址，Key 留空");
+  }
+  // 模型会下线换名，提醒用户以控制台为准，而不是照抄这里的默认值
+  if($("apiPreset").value==="doubao"){
+    toast("豆包不放行跨域，要经「自建代理」中转；模型名以火山方舟控制台为准");
   }
 }
 /** 从 Key 的形态猜服务商，只在地址还空着的时候自动填 —— 不覆盖用户已经填好的 */
@@ -1685,7 +1696,7 @@ function apiErrorText(err,res){
     return "连不上这个地址。常见原因：① 地址写错（末尾不要加 /chat/completions）；② 接口不支持浏览器直连（CORS）；③ 网络不通。";
   if(/401|403|Unauthorized|invalid.*key|api key/i.test(m))
     return "Key 不对或没有权限。检查是否复制完整、有没有多余空格。";
-  if(/404/.test(m))return "地址或模型名不对（404）。确认 API 地址只写到 /v4 这一级。";
+  if(/404/.test(m))return "地址或模型名不对（404）。确认 API 地址只写到版本号那一级（如 /v4、/api/v3），模型名去控制台复制最新的。";
   if(/429/.test(m))return "请求太频繁或额度用完了，等一会儿再试。";
   return m;
 }
