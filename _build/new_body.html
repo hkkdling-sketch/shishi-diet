@@ -106,12 +106,14 @@
       <div id="itemList" style="display:none"></div>
       <!-- 份量按钮紧跟在结论下面：觉得 AI 估得不对，点一下换掉 -->
       <div id="portionBox"></div>
-      <button class="btn-g" style="margin-top:12px" onclick="aiToLog(false)">就这样记 · 并扣减库存</button>
+      <!-- 主操作只做一件事：记进今天。不碰库存 —— 一个人吃饭，
+           记「吃了什么」和「家里还剩什么」本来就是两件事，不该绑在一起 -->
+      <button class="btn-g" style="margin-top:12px" onclick="aiToLog(true)">记入今日</button>
       <div class="btnrow" style="margin-top:8px">
-        <button class="btn-o" onclick="aiToLog(true)">外食 · 不扣库存</button>
-        <button class="btn-o" onclick="aiToStock()">只加入库存</button>
+        <button class="btn-o" onclick="aiToLog(false)">记入并扣库存</button>
+        <button class="btn-o" onclick="aiToStock()">加入库存</button>
       </div>
-      <div class="hint" style="margin-top:8px"><svg class="ic-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg><span>在外面吃的选「外食」：只算进今天吃了多少，不动库存</span></div>
+      <div class="hint" style="margin-top:8px"><svg class="ic-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg><span>「记入今日」不动库存。只有确实想从库存里扣，才点「记入并扣库存」</span></div>
       <details class="aiDetail" id="singleForm">
         <summary>详细数值 · AI 已填好，一般不用改</summary>
         <div class="fld" style="margin-top:12px"><label>食物名称</label><input id="rN"></div>
