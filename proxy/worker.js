@@ -15,7 +15,7 @@
 // 豆包那几个是为了「上游换成火山方舟」时开箱可用 —— 否则换完上游会直接被 403 挡住
 const DEFAULT_MODELS = [
   'glm-4v-flash', 'glm-4v',
-  'qwen-vl-plus',
+  'qwen3-vl-plus',
   'doubao-seed-2-1-lite-260915', 'doubao-seed-2-1-pro-260915',
   'gpt-4o-mini',
 ];
