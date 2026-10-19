@@ -102,6 +102,8 @@
       <!-- AI 先给结论：这是什么、大概多重、含多少。用户看一眼就能决定记不记，
            不用对着 9 个输入框逐个核对。 -->
       <div id="aiSummary" style="display:none"></div>
+      <!-- 识别出的每一条：能单独改份量、单独删 -->
+      <div id="itemList" style="display:none"></div>
       <!-- 份量按钮紧跟在结论下面：觉得 AI 估得不对，点一下换掉 -->
       <div id="portionBox"></div>
       <button class="btn-g" style="margin-top:12px" onclick="aiToLog(false)">就这样记 · 并扣减库存</button>
@@ -110,7 +112,7 @@
         <button class="btn-o" onclick="aiToStock()">只加入库存</button>
       </div>
       <div class="hint" style="margin-top:8px"><svg class="ic-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg><span>在外面吃的选「外食」：只算进今天吃了多少，不动库存</span></div>
-      <details class="aiDetail">
+      <details class="aiDetail" id="singleForm">
         <summary>详细数值 · AI 已填好，一般不用改</summary>
         <div class="fld" style="margin-top:12px"><label>食物名称</label><input id="rN"></div>
         <div class="fld"><label>归类（决定库存里的分组）</label>
