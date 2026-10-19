@@ -1845,3 +1845,79 @@ printf '%s' "$OUT" | grep '✗' | head -10   # ← 这里调的是我的函数�
 - `_build/e2e-portion.js`：浏览器里**真的点一遍** —— 填名 → 选份量 → 看纤维数字
 - `index.html` 198,860 字节（+8KB，份量表 + 函数）
 - `bash _build/test.sh --full` → **全部通过**（384 条断言 + 4 个浏览器套件）
+
+### 19 · 豆包能不能接？能，但不是「免费又识图」那么简单
+
+用户问：「可以把豆包接入吗 之前没想到 豆包免费 然后还可以识图」
+
+**先说结论**：能接，但**不能从浏览器直连**，必须经 `proxy/worker.js` 中转。
+
+#### 19.1 我怎么查的（以及第一次判断错了）
+
+先 curl 打 OPTIONS 预检，看到：
+
+```
+access-control-allow-origin: https://example.com   ← 换任意 Origin 都回显
+access-control-allow-methods: GET,POST,PUT,DELETE,HEAD,OPTIONS
+access-control-allow-headers: authorization,content-type
+```
+
+**当时判断「可以直连」——这个判断是错的。**
+
+然后在真浏览器里发请求，全部 `Failed to fetch`。但沙箱里的 Chromium 时通时不通，
+必须做对照：同时请求 jsdelivr。
+
+| 服务 | 浏览器实测（对照组 jsdelivr 200） |
+|---|---|
+| 通义 DashScope | **HTTP 401** ← 请求到了服务端 |
+| 豆包 火山方舟 | Failed to fetch |
+| 智谱 bigmodel | Failed to fetch |
+
+再回头看 POST 的**实际响应头**：
+
+```
+=== 豆包 ===  HTTP/1.1 401 Unauthorized     ← 一个 CORS 头都没有
+=== 通义 ===  HTTP/1.1 401 + access-control-allow-origin: *
+=== 智谱 ===  HTTP/1.1 401 + Access-Control-Allow-Origin: <origin>
+```
+
+#### 19.2 真正的教训
+
+**CORS 是两次检查，不是一次：**
+
+1. **预检**（OPTIONS）要放行 —— 否则浏览器连 POST 都不发
+2. **实际响应**也要带 `Access-Control-Allow-Origin` —— 否则浏览器把响应丢掉
+
+豆包是「预检放行、实际响应不放行」的半吊子配置，照样不能用。
+智谱反过来「预检不放、实际响应放」，同样不能用。
+
+**只看 OPTIONS 就下结论，会得到完全相反的答案。** 这次差点就这么交付了。
+
+#### 19.3 落地
+
+- **预设顺序按实测调整**：通义标「可直连」放第一位，豆包/智谱标「需代理」
+- **worker.js 白名单加豆包模型** —— 否则换完上游直接被 403 挡住
+- **部署页**写清豆包的 `UPSTREAM` 和模型名，以及 50 万免费额度
+- 界面上把结论写出来：「2026-10 实测：只有通义放行浏览器跨域」
+- `edge-api.js` 加 5 条断言，其中两条专盯文案：**不许把豆包写成可直连**
+- `e2e-doubao.js` 改成**事实校验测试**：真浏览器发真请求，按错误类型判断
+  能不能直连。服务商哪天改策略，测试会失败提醒同步文案
+
+#### 19.4 豆包到底值不值得用
+
+值得，前提是你愿意部署一次 Worker（5 分钟，免费）：
+
+| | 通义 | 豆包 | 智谱 |
+|---|---|---|---|
+| 直连 | 可以 | 不行 | 不行 |
+| 免费额度 | 每模型 100 万 tokens | 50 万 tokens | 视觉模型本身免费 |
+| 中文场景 | 好 | **更强** | 一般 |
+| 要实名 | 是 | 是 | 是 |
+
+识食一次识别约 1500 tokens，**50 万够认 300 多张**。
+
+#### 19.5 构建产物
+
+- `index.html` 200,225 字节
+- `bash _build/test.sh --full` → **全部通过**（392 条断言 + 4 个浏览器套件）
+- 三处文档数字同步（README / SKILL.md / testing.md）
