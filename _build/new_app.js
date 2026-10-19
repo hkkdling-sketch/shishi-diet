@@ -5,7 +5,7 @@
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-19b";
+const BUILD="2026-10-19c";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -1513,6 +1513,7 @@ document.addEventListener("click",e=>{if(!e.target.closest(".searchbox")){const 
 
 /* ================= 拍照识别 ================= */
 let curImgs=[];                 // 已选图片（dataURL 数组，支持多张）
+let aiNote="";                  // AI 对这张图的一句话判断
 const MAX_PHOTOS=6;             // 上限：再多会让请求体和识别时间都失控
 
 /* 两个入口共用一套处理：
@@ -1567,6 +1568,29 @@ function portionsFor(name,cat){
   }
   return PORT_FALLBACK[cat]||PORT_FALLBACK.other;
 }
+/** AI 判断卡片：先给结论，再让人决定要不要改。
+    以前识别完是一屏 9 个输入框，用户得逐个核对才知道 AI 认出了什么。
+    现在先一句话说清「这是什么、大概多重、含多少」。 */
+function renderAiSummary(){
+  const box=$("aiSummary");if(!box)return;
+  const nm=$("rN")?$("rN").value.trim():"";
+  if(!nm){box.style.display="none";return}
+  const val=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
+  const g=val("rG"),fb=val("rFb"),k=val("rK"),p=val("rP");
+  const bits=[];
+  if(g>0&&fb>0)bits.push(`膳食纤维 <b>${Math.round(fb*g/10)/10} g</b>`);
+  if(g>0&&p>0)bits.push(`蛋白 <b>${Math.round(p*g/10)/10} g</b>`);
+  if(g>0&&k>0)bits.push(`<b>${Math.round(k*g/100)}</b> kcal`);
+  box.style.display="block";
+  box.innerHTML=`<div class="aiCard">
+    <div class="aiTop"><span class="aiName">${esc(nm)}</span>${
+      g>0?`<span class="aiG">约 ${g} g</span>`
+         :`<span class="aiG warn">重量待确认</span>`}</div>
+    ${bits.length?`<div class="aiNums">${bits.join(" · ")}</div>`:""}
+    ${aiNote?`<div class="aiNote">${esc(aiNote)}</div>`:""}
+  </div>`;
+}
+
 /** 渲染份量按钮。识别完成后、或用户改了名称/分类时调用 */
 function renderPortions(){
   const box=$("portionBox");if(!box)return;
@@ -1588,12 +1612,10 @@ function updatePortionTip(){
   const tip=$("portionTip");if(!tip)return;
   const val=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
   const g=val("rG"),fb=val("rFb"),k=val("rK");
-  if(g<=0){tip.innerHTML=`<span>选一个份量，或直接在上面填克重</span>`;return}
-  const fbg=Math.round(fb*g/10)/10,kg=Math.round(k*g/100);
-  const parts=[`这份 ${g} g`];
-  if(fb>0)parts.push(`膳食纤维 <b>${fbg} g</b>`);
-  if(k>0)parts.push(`约 ${kg} kcal`);
-  tip.innerHTML=`<span>${parts.join(" · ")}</span>`;
+  // 数字已经在上面那张卡片里了，这里只做引导，别重复报一遍
+  if(g<=0){tip.innerHTML=`<span>AI 没估出重量，选一个份量或直接填克重</span>`;return}
+  tip.innerHTML=`<span>份量不对？点上面换个单位</span>`;
+  renderAiSummary();
 }
 /* 提示要跟着输入走：改名字可能换一套单位，改克重/纤维要立刻重算 */
 ["rN","rCat"].forEach(id=>{
@@ -1636,8 +1658,10 @@ function clearPhoto(){
   const r=$("scanResult");if(r)r.style.display="none";
 }
 function openManual(){
+  aiNote="";
   $("scanResult").style.display="block";
   renderPortions();
+  renderAiSummary();
   $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function applyPreset(){
@@ -1758,8 +1782,8 @@ async function doScan(){
   if(!curImgs.length){toast("先选一张图");return}
   const mode=$("scanMode").value;
   const sys=mode==="pack"
-    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取中国国标 GB 28050 的强制标示项：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)，另外尽量给出膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注的项目按同类食品合理估算。只返回JSON，格式：{"name":"具体商品名","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`
-    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)、膳食纤维(g)。若多张图是不同食物，取最主要的那一种作为名称。数值参考《中国食物成分表》。若是熟食/菜肴，请特别注意中餐的隐形油盐（炒菜、勾芡、糖醋会显著抬高脂肪和钠），按常见做法估算。只返回JSON，格式：{"name":"食物名","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`;
+    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取中国国标 GB 28050 的强制标示项：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)，另外尽量给出膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注的项目按同类食品合理估算。另外给两个字段：grams = 这一份（一包/一瓶/一袋）的可食部总重量，标签上有净含量就按净含量，没有就按常见包装规格估；note = 一句话说明你看到了什么、怎么判断的（20 字以内，说人话）。只返回JSON，格式：{"name":"具体商品名","grams":整份克数,"note":"一句话","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`
+    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)、膳食纤维(g)。若多张图是不同食物，取最主要的那一种作为名称。数值参考《中国食物成分表》。若是熟食/菜肴，请特别注意中餐的隐形油盐（炒菜、勾芡、糖醋会显著抬高脂肪和钠），按常见做法估算。**关键**：除了每 100g 的营养值，还要估算这一份**实际的可食部总重量 grams** —— 看盘子/餐盒大小、食物占的面积和堆起来的厚度、跟常见份量比。估不准也要给一个数，别留空。再给一个 note：一句话说明你看到了什么、依据是什么（20 字以内，说人话，不要客套）。只返回JSON，格式：{"name":"食物名","grams":整份克数,"note":"一句话","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`;
   const btn=$("doScan");btn.disabled=true;
   const n=curImgs.length;
   $("scanMsg").innerHTML=`<span>识别中（${n} 张图），请稍候…</span>`;
@@ -1791,9 +1815,13 @@ async function doScan(){
     $("rF").value=j.fat??"";$("rC").value=j.carbs??"";
     const put=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
     put("rFb",j.fiber);put("rNa",j.sodium);put("rSf",j.satfat);put("rSg",j.sugar);
+    // AI 自己估的整份重量：直接填好，用户不用从零想「这盘多少克」
+    put("rG",j.grams);
+    aiNote=String(j.note||"").trim();
     if($("rCat"))$("rCat").value=guessCat(j.name||"");   // 自动归类，用户可改
     $("scanResult").style.display="block";
     renderPortions();
+    renderAiSummary();
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功（用了 ${n} 张图），请核对数值</span>`;
     $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
