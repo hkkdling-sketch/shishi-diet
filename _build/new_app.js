@@ -5,7 +5,7 @@
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-19d";
+const BUILD="2026-10-19e";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -1386,10 +1386,20 @@ function doSetLow(id,v){
 
 function eatSheet(id){
   const it=S.inv.find(x=>x.id===id);if(!it)return;
-  const quicks=[it.g*0.25,it.g*0.5,it.g*0.75,it.g].map(g=>Math.round(g)).filter((g,i,a)=>g>0&&a.indexOf(g)===i);
+  // 快捷按钮给「一份」而不是库存百分比。
+  // 以前是 25%/50%/75%/100%：2kg 鸡胸肉 → 500/1000/1500/2000g，
+  // 而用户想记的是 150g —— 最近选项 1000g，误差 +850g，按钮等于摆设。
+  // 现在直接用份量表（跟拍照识别页同一套单位），认知也统一。
+  let quicks=portionsFor(it.n,it.cat)
+    .map(([u,g])=>({u,g:Math.round(g)}))
+    .filter(x=>x.g>0&&x.g<=it.g)
+    .filter((x,i,a)=>a.findIndex(y=>y.g===x.g)===i)
+    .slice(0,4);
+  // 库存比最小份量还少时，只给「全部」
+  if(!quicks.length)quicks=[{u:"全部",g:Math.round(it.g)}];
   sheet(`<h3>吃掉<span class="hl">${esc(it.n)}</span></h3>
     <div class="fld"><label>剩余 ${it.g} g，本次吃多少 (g)</label><input id="eatG" type="number" inputmode="decimal" value="${it.g>=100?100:it.g}"></div>
-    <div class="btnrow" style="margin-bottom:12px">${quicks.map(g=>`<button class="btn-s" onclick="setEat(${g})">${g}g</button>`).join("")}</div>
+    <div class="plist" style="margin-bottom:12px">${quicks.map(x=>`<button class="pbtn" onclick="setEat(${x.g})">${esc(x.u)}<span class="pg">${x.g} g</span></button>`).join("")}</div>
     <div class="chip neutral" id="eatPrev" style="margin-bottom:6px"></div>
     <div class="eatleft" id="eatLeft"></div>
     <div class="btnrow" style="margin-top:14px"><button class="btn-o" onclick="closeSheet()">取消</button><button class="btn-g" onclick="doEat('${id}')">确认吃掉</button></div>`);
