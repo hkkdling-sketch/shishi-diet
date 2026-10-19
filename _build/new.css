@@ -211,8 +211,6 @@ a.linkbtn.solid{background:var(--accent);color:#fff;border:1px solid var(--accen
 .item .dt{font-size:12px;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
 .item.inv{flex-wrap:wrap;gap:10px}
 .item.inv>div:first-child{flex:1 1 100%}
-.item.inv .btns{display:flex;gap:8px;width:100%}
-.item.inv .btns button{flex:1}
 .tagk{font-size:13.5px;color:var(--ink);font-weight:600;white-space:nowrap}
 
 /* ---------- 徽章 ---------- */
@@ -381,11 +379,14 @@ img.prev{width:100%;border-radius:var(--r-md);margin:10px 0;border:1px solid var
 .gbar{height:4px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:7px}
 .gbar>i{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .item.inv{align-items:flex-start;padding:13px 0}
-.item.inv .btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+/* 一行只留两个按钮：吃掉（撑满）+ 更多（固定宽）。低频操作收进 ⋯ 菜单 */
+.item.inv .btns{display:flex;flex-direction:row;gap:6px;width:100%;flex-shrink:0}
 .item.inv .btns .btn-s,.item.inv .btns .btn-r{
-  padding:6px 11px;font-size:12px;min-width:56px;display:inline-flex;
+  padding:8px 11px;font-size:12.5px;min-height:36px;display:inline-flex;
   align-items:center;justify-content:center;gap:4px;
 }
+.item.inv .btns .btn-s:first-child{flex:1}
+.item.inv .btns .btn-s:last-child{flex:0 0 auto;min-width:44px;padding:8px 10px}
 .item.inv .btns .btn-s .ic-svg,.item.inv .btns .btn-r .ic-svg{margin:0}
 
 /* ---------- 采购清单 ---------- */
