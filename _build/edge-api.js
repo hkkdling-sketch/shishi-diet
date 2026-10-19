@@ -268,6 +268,17 @@ sec('5. doScan：有地址无 Key 时不再要求填 Key');
     ok(model !== 'qwen-vl-plus' && model !== 'qwen-vl-max', '不能用已下线的旧模型名');
   }
 
+  /* ============ 8c. 连接测试的占位图不能太小 ============ */
+  // 真实事故：测试连接用的是 1×1 PNG，智谱和 OpenAI 都接受，
+  // 但通义回 400「height:1 or width:1 must be larger than 10」。
+  // 用户看到 400 以为 Key 填错了，实际配置全对 —— 白折腾半天。
+  sec('8c. 连接测试图尺寸够大');
+  {
+    ok(!js.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB'), '不能用 1×1 的 PNG 做连接测试（通义会 400）');
+    ok(js.includes('iVBORw0KGgoAAAANSUhEUgAAAEAAAABAC'), '应该用 64×64 的 PNG 占位图');
+    ok(/must be larger than/i.test(js), '错误提示要能识别「图片尺寸太小」这种情况');
+  }
+
   /* ============ 8. 接口不该用全局 event ============ */
   sec('8. 代码健壮性：不依赖浏览器专有的全局 event');
   {
