@@ -276,6 +276,19 @@ sec('5. doScan：有地址无 Key 时不再要求填 Key');
     ok(src.includes('apiTestBtn'), '测试按钮通过 id 获取，而不是靠事件对象');
   }
 
+  /* ============ 8b. 缩图失败不能把坏 URL 发出去 ============ */
+  // 真实事故：手机上拍的 HEIC 读图失败，shrink 兜底返回原始 src，
+  // 上游回 400「The provided URL does not appear to be valid」——
+  // 用户看到 400 以为是版本旧，实际是图没发对。
+  sec('8b. 缩图兜底不发坏 URL');
+  {
+    ok(!/im\.onerror\s*=\s*\(\)\s*=>\s*ok\(src\)/.test(js), '读图失败时不能把原始 src 当结果返回');
+    ok(/im\.onerror\s*=\s*\(\)\s*=>\s*ok\(null\)/.test(js), '读图失败应返回 null，让上层跳过这张');
+    ok(js.includes('data:image/'), 'shrink 要校验输出确实是 data URL');
+    ok(/filter\(Boolean\)/.test(js), '发请求前要把缩图失败（null）的滤掉');
+    ok(/400/.test(js) && /HEIC/.test(js), '400 的提示要点明 HEIC / 图太大，而不是只说「请求错误」');
+  }
+
   console.log(`\n================ 汇总 ================`);
   console.log(`通过 ${pass} / 失败 ${fail}`);
   process.exit(fail ? 1 : 0);
