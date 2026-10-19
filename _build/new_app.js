@@ -5,7 +5,7 @@
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-19e";
+const BUILD="2026-10-19f";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -230,6 +230,7 @@ const INTENSITY_LABEL={low:"低强度",mid:"中等强度",high:"高强度"};
 
 /* ================= 图标系统 ================= */
 const ICON_PATHS={
+  pencil:'<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/>',
   more:'<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
   today:'<path d="M3 20h18"/><rect x="5" y="11" width="3.2" height="7" rx="1"/><rect x="10.4" y="7" width="3.2" height="11" rx="1"/><rect x="15.8" y="13" width="3.2" height="5" rx="1"/>',
   stock:'<path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z"/><path d="M12 11.5 20 7"/><path d="M12 11.5v8.5"/><path d="M12 11.5 4 7"/>',
@@ -1180,7 +1181,8 @@ function renderStock(){
     <div class="invh-foot">
       <span>${burnAll>0?`按近 7 天速度，日均消耗 ${Math.round(burnAll)}g · 还能吃 ${Math.floor(overallDays)} 天`:"记录几天饮食后，这里会预测还能吃几天"}</span>
     </div>
-  </div>`;
+  </div>
+  <div class="hint" style="margin:-4px 0 12px"><span>这一页只管<b>家里还剩什么</b>、该买什么。<b>记录吃了什么不用来这</b>——拍照或手动记就行。</span></div>`;
 
   // ---- 智能提示 ----
   const low=S.inv.filter(it=>it.g<=lowThreshold(it));
@@ -1612,7 +1614,7 @@ function renderItems(){
         <div class="itemName">${esc(it.n)}</div>
         <div class="itemMeta">${meta.join(" · ")}</div>
       </div>
-      <button class="itemBtn" onclick="editItem(${i})" aria-label="改份量">${ic("scale",15)}</button>
+      <button class="itemBtn" onclick="editItem(${i})" aria-label="改份量">${ic("pencil",15)}</button>
       <button class="itemBtn" onclick="delItem(${i})" aria-label="删掉这一条">${ic("trash",15)}</button>
     </div>`;
   }).join("");
