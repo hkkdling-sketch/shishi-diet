@@ -1646,7 +1646,7 @@ function applyPreset(){
     // 判断依据不能只看 OPTIONS —— 预检放行不等于实际响应放行，这是两个检查。
     doubao:["https://ark.cn-beijing.volces.com/api/v3","doubao-seed-2-1-lite-260915"],
     zhipu:["https://open.bigmodel.cn/api/paas/v4","glm-4v-flash"],
-    qwen:["https://dashscope.aliyuncs.com/compatible-mode/v1","qwen-vl-plus"],
+    qwen:["https://dashscope.aliyuncs.com/compatible-mode/v1","qwen3-vl-plus"],
     openai:["https://api.openai.com/v1","gpt-4o-mini"],
     proxy:["","glm-4v-flash"],
   }[$("apiPreset").value];
