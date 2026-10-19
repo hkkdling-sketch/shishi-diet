@@ -3,6 +3,10 @@
    架构：单文件 PWA，零依赖，数据存 localStorage
    ============================================================ */
 
+/* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
+   省掉「到底是代码问题还是他没更新」这种来回猜。 */
+const BUILD="2026-10-19";
+
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
 const FOODS=[
@@ -1696,6 +1700,12 @@ function apiErrorText(err,res){
     return "连不上这个地址。常见原因：① 地址写错（末尾不要加 /chat/completions）；② 接口不支持浏览器直连（CORS）；③ 网络不通。";
   if(/401|403|Unauthorized|invalid.*key|api key/i.test(m))
     return "Key 不对或没有权限。检查是否复制完整、有没有多余空格。";
+  if(/400/.test(m)){
+    // 这是最容易被误判成「模型不对/版本旧」的一类错：其实是图没发对
+    if(/URL does not appear to be valid|InvalidParameter|invalid_parameter/i.test(m))
+      return "图片被判格式无效（400）。多半是 HEIC 照片或图太大 —— 用相机重拍一张，或先把图转成 JPG 再选。";
+    return "请求被拒绝（400）：" + m.slice(0, 90);
+  }
   if(/404/.test(m))return "地址或模型名不对（404）。确认 API 地址只写到版本号那一级（如 /v4、/api/v3），模型名去控制台复制最新的。";
   if(/429/.test(m))return "请求太频繁或额度用完了，等一会儿再试。";
   return m;
@@ -1751,8 +1761,12 @@ async function doScan(){
   $("scanMsg").innerHTML=`<span>识别中（${n} 张图），请稍候…</span>`;
   try{
     // 多张图一起发：模型能在一次上下文里交叉比对（配料表 + 营养成分表 正是这种用法）
-    const shrunk=await Promise.all(curImgs.map(s=>shrink(s)));
-    const content=[{type:"text",text:n>1?`请综合这 ${n} 张图片进行识别`:"请识别这张图"}];
+    // 缩图失败的会被 shrink 返回 null，必须滤掉 —— 否则会发一个坏 URL 过去，
+    // 上游回一个跟真实原因无关的 400
+    const all=await Promise.all(curImgs.map(s=>shrink(s)));
+    const shrunk=all.filter(Boolean);
+    if(!shrunk.length)throw new Error("这几张图都读不出来（可能是 HEIC 或已损坏），换一张 JPG/PNG 试试");
+    const content=[{type:"text",text:shrunk.length>1?`请综合这 ${shrunk.length} 张图片进行识别`:"请识别这张图"}];
     shrunk.forEach(u=>content.push({type:"image_url",image_url:{url:u}}));
     const res=await fetch(base+"/chat/completions",{
       method:"POST",
@@ -1787,13 +1801,24 @@ function shrink(src,max=1024){
   return new Promise(ok=>{
     const im=new Image();
     im.onload=()=>{
-      const s=Math.min(1,max/Math.max(im.width,im.height));
+      // 尺寸必须是整数：canvas 宽高是 unsigned long，给小数会被截断，
+      // 极端情况下截成 0 就直接抛异常
+      const k=Math.min(1,max/Math.max(im.width,im.height));
+      const w=Math.round(im.width*k),h=Math.round(im.height*k);
+      if(!w||!h){ok(null);return}
       const cv=document.createElement("canvas");
-      cv.width=im.width*s;cv.height=im.height*s;
-      cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
-      ok(cv.toDataURL("image/jpeg",.82));
+      cv.width=w;cv.height=h;
+      cv.getContext("2d").drawImage(im,0,0,w,h);
+      let out="";
+      try{out=cv.toDataURL("image/jpeg",.82)}catch(e){ok(null);return}
+      // 上游只认 data URL。裸 base64 会被判 400「URL 无效」，
+      // 所以这里宁可返回 null（上层跳过这张），也不要放个坏 URL 过去
+      ok(/^data:image\//.test(out)?out:null);
     };
-    im.onerror=()=>ok(src);
+    // 读不出来就跳过这张 —— 以前这里返回原始 src，手机拍的 HEIC 大图
+    // 会以「看起来像 data URL 但上游不认」的形态发出去，最后报一个
+    // 跟真实原因无关的 400
+    im.onerror=()=>ok(null);
     im.src=src;
   });
 }
@@ -1947,6 +1972,25 @@ function renderMe(){
   renderWeightTrend();
   renderRestBudget();
   renderAdapt();
+  // 版本号 + 强制更新入口。纯前端 PWA 最难查的就是「他跑的到底是不是新版」，
+  // 与其每次都问一遍，不如直接摆在界面上
+  if($("buildInfo"))$("buildInfo").innerHTML=
+    `<span>版本 <b>${BUILD}</b> · 改了东西看不到？<a href="javascript:forceUpdate()" style="color:var(--accent);text-decoration:underline">强制更新</a>（不会动你的数据）</span>`;
+}
+
+/** 注销 Service Worker + 清缓存后重载。只清静态资源缓存，localStorage 里的记录不受影响。 */
+async function forceUpdate(){
+  try{
+    if(window.navigator&&navigator.serviceWorker){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+    if(window.caches){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+  }catch(e){}
+  location.reload();
 }
 
 /** 训练日 vs 休息日目标并排显示，让人一眼看到差多少 */
