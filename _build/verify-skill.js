@@ -26,6 +26,7 @@ const SUITES = {
   'edge-adapt.js': 'ok',
   'edge-api.js': 'ok',
   'edge-portion.js': 'ok',
+  'edge-multi.js': 'ok',
   'test-worker.mjs': 'ok',
 };
 
