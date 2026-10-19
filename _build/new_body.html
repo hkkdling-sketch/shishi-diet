@@ -49,13 +49,14 @@
     <div class="fld"><label>快速选择服务商</label>
       <select id="apiPreset" onchange="applyPreset()">
         <option value="">自定义</option>
-        <option value="zhipu">智谱 GLM-4V-Flash（免费）</option>
-        <option value="qwen">通义千问 Qwen-VL</option>
-        <option value="openai">OpenAI GPT-4o-mini</option>
+        <option value="qwen">通义 Qwen-VL（可直连，填 Key 就能用）</option>
+        <option value="doubao">豆包 · 火山方舟（需代理，50 万免费）</option>
+        <option value="zhipu">智谱 GLM-4V-Flash（需代理，模型免费）</option>
+        <option value="openai">OpenAI GPT-4o-mini（需梯子）</option>
         <option value="proxy">自建代理（不用填 Key）</option>
       </select>
     </div>
-    <div class="hint" style="margin:-4px 0 12px"><span>没有 Key？去 <b>bigmodel.cn</b> 注册创建 API Key，选「智谱」即可，目前有免费模型。Key 只存本机，不会上传。</span></div>
+    <div class="hint" style="margin:-4px 0 12px"><span><b>2026-10 实测</b>：只有<b>通义</b>放行浏览器跨域，填 Key 直接能用；<b>豆包</b>和<b>智谱</b>的接口不放行跨域，必须经「自建代理」中转。豆包个人开发者有 <b>50 万 tokens</b> 免费额度、中文场景强（Key 在 console.volcengine.com → 火山方舟）；智谱视觉模型本身免费。Key 只存本机，不会上传。</span></div>
     <div class="fld"><label>API 地址（OpenAI 兼容 /chat/completions）</label><input id="apiBase" placeholder="https://open.bigmodel.cn/api/paas/v4"></div>
     <div class="grid2">
       <div class="fld"><label>模型</label><input id="apiModel" placeholder="glm-4v-flash"></div>
