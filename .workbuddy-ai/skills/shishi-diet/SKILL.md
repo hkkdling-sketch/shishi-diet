@@ -31,7 +31,7 @@ agent_created: true
 
 改完必须跑：`python _build/assemble.py`（拼装）→ `python _build/verify.py`（结构校验）。
 
-**2. 交付前必须全部测试通过。** 见 `references/testing.md`。当前 **392 条断言 + 浏览器端到端**。
+**2. 交付前必须全部测试通过。** 见 `references/testing.md`。当前 **396 条断言 + 浏览器端到端**。
 一条不过就不算改完。
 
 **3. 界面里禁止 emoji。** 图标一律内联 SVG（`ICON_PATHS` + `ic(name,size)`）。
