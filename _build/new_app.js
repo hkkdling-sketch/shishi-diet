@@ -5,7 +5,7 @@
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-19c";
+const BUILD="2026-10-19d";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -1514,6 +1514,7 @@ document.addEventListener("click",e=>{if(!e.target.closest(".searchbox")){const 
 /* ================= 拍照识别 ================= */
 let curImgs=[];                 // 已选图片（dataURL 数组，支持多张）
 let aiNote="";                  // AI 对这张图的一句话判断
+let scanItems=[];               // 识别出的条目（一盘可能有好几样）
 const MAX_PHOTOS=6;             // 上限：再多会让请求体和识别时间都失控
 
 /* 两个入口共用一套处理：
@@ -1568,24 +1569,90 @@ function portionsFor(name,cat){
   }
   return PORT_FALLBACK[cat]||PORT_FALLBACK.other;
 }
-/** AI 判断卡片：先给结论，再让人决定要不要改。
-    以前识别完是一屏 9 个输入框，用户得逐个核对才知道 AI 认出了什么。
-    现在先一句话说清「这是什么、大概多重、含多少」。 */
+/* ---------- 识别结果：条目列表 ---------- */
+/** 切换「识别结果列表」和「手动输入表单」两种形态 */
+function showMode(which){
+  const list=$("itemList"),form=$("singleForm"),pb=$("portionBox");
+  if(list)list.style.display=which==="list"?"block":"none";
+  if(form)form.style.display=which==="form"?"block":"none";
+  // 份量按钮只在手填时用；识别结果里每条自己带「改份量」
+  if(pb)pb.style.display=which==="form"?"block":"none";
+}
+/** 渲染识别出的条目：一条一行，能单独改份量、单独删 */
+function renderItems(){
+  const box=$("itemList");if(!box)return;
+  if(!scanItems.length){box.innerHTML="";box.style.display="none";renderAiSummary();return}
+  box.style.display="block";
+  box.innerHTML=scanItems.map((it,i)=>{
+    const fb=Math.round(it.fb*it.g/10)/10,kc=Math.round(it.k*it.g/100);
+    const meta=[it.g>0?it.g+" g":"重量待确认"];
+    if(it.g>0&&fb>0)meta.push("纤维 "+fb+" g");
+    if(it.g>0&&kc>0)meta.push(kc+" kcal");
+    return `<div class="itemRow">
+      <div class="itemMain">
+        <div class="itemName">${esc(it.n)}</div>
+        <div class="itemMeta">${meta.join(" · ")}</div>
+      </div>
+      <button class="itemBtn" onclick="editItem(${i})" aria-label="改份量">${ic("scale",15)}</button>
+      <button class="itemBtn" onclick="delItem(${i})" aria-label="删掉这一条">${ic("trash",15)}</button>
+    </div>`;
+  }).join("");
+  renderAiSummary();
+}
+/** 删掉第 i 条 */
+function delItem(i){
+  if(i<0||i>=scanItems.length)return;
+  scanItems.splice(i,1);
+  if(!scanItems.length){clearScan();toast("都删掉了，重新拍一张吧");return}
+  renderItems();
+}
+/** 改某一条的份量：常见单位 + 手动填 */
+function editItem(i){
+  const it=scanItems[i];if(!it)return;
+  const list=portionsFor(it.n,it.cat);
+  sheet(`<h3>${esc(it.n)}</h3>
+    <div class="hint" style="margin-bottom:12px"><span>AI 估的是 <b>${it.g>0?it.g+" g":"未知"}</b>，觉得不对就点一个，或直接填克数</span></div>
+    <div class="plist" style="margin-bottom:12px">${list.map(([u,g])=>
+      `<button class="pbtn" onclick="setItemG(${i},${g})">${esc(u)}<span class="pg">${g} g</span></button>`).join("")}</div>
+    <div class="fld"><label>克数 (g)</label><input id="eiG" type="number" inputmode="decimal" value="${it.g>0?it.g:""}"></div>
+    <div class="btnrow"><button class="btn-o" onclick="closeSheet()">取消</button>
+      <button class="btn-g" onclick="saveItemG(${i})">确定</button></div>`);
+}
+function setItemG(i,g){const el=$("eiG");if(el)el.value=g}
+function saveItemG(i){
+  const v=parseFloat(($("eiG")||{}).value)||0;
+  if(v<=0){toast("填个克数");return}
+  if(scanItems[i])scanItems[i].g=v;
+  closeSheet();renderItems();
+}
+/** 清空识别结果 */
+function clearScan(){
+  scanItems=[];aiNote="";
+  if($("itemList")){$("itemList").innerHTML="";$("itemList").style.display="none"}
+  if($("aiSummary"))$("aiSummary").style.display="none";
+  if($("scanResult"))$("scanResult").style.display="none";
+}
+/** 总计卡：先给结论，再让人决定要不要改 */
 function renderAiSummary(){
   const box=$("aiSummary");if(!box)return;
-  const nm=$("rN")?$("rN").value.trim():"";
-  if(!nm){box.style.display="none";return}
-  const val=id=>{const el=$(id);return el?parseFloat(el.value)||0:0};
-  const g=val("rG"),fb=val("rFb"),k=val("rK"),p=val("rP");
+  const list=(scanItems&&scanItems.length)?scanItems:[readR()].filter(x=>x.n);
+  if(!list.length){box.style.display="none";return}
+  const tot=list.reduce((a,x)=>({
+    g:a.g+(x.g||0),
+    fb:a.fb+(x.fb||0)*(x.g||0)/100,
+    p:a.p+(x.p||0)*(x.g||0)/100,
+    k:a.k+(x.k||0)*(x.g||0)/100
+  }),{g:0,fb:0,p:0,k:0});
   const bits=[];
-  if(g>0&&fb>0)bits.push(`膳食纤维 <b>${Math.round(fb*g/10)/10} g</b>`);
-  if(g>0&&p>0)bits.push(`蛋白 <b>${Math.round(p*g/10)/10} g</b>`);
-  if(g>0&&k>0)bits.push(`<b>${Math.round(k*g/100)}</b> kcal`);
+  if(tot.fb>0.05)bits.push(`膳食纤维 <b>${Math.round(tot.fb*10)/10} g</b>`);
+  if(tot.p>0.05)bits.push(`蛋白 <b>${Math.round(tot.p*10)/10} g</b>`);
+  if(tot.k>0)bits.push(`<b>${Math.round(tot.k)}</b> kcal`);
+  const title=list.length===1?esc(list[0].n):`这一餐 · ${list.length} 样`;
   box.style.display="block";
   box.innerHTML=`<div class="aiCard">
-    <div class="aiTop"><span class="aiName">${esc(nm)}</span>${
-      g>0?`<span class="aiG">约 ${g} g</span>`
-         :`<span class="aiG warn">重量待确认</span>`}</div>
+    <div class="aiTop"><span class="aiName">${title}</span>${
+      tot.g>0?`<span class="aiG">约 ${Math.round(tot.g)} g</span>`
+             :`<span class="aiG warn">重量待确认</span>`}</div>
     ${bits.length?`<div class="aiNums">${bits.join(" · ")}</div>`:""}
     ${aiNote?`<div class="aiNote">${esc(aiNote)}</div>`:""}
   </div>`;
@@ -1658,8 +1725,9 @@ function clearPhoto(){
   const r=$("scanResult");if(r)r.style.display="none";
 }
 function openManual(){
-  aiNote="";
+  aiNote="";scanItems=[];
   $("scanResult").style.display="block";
+  showMode("form");
   renderPortions();
   renderAiSummary();
   $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
@@ -1782,8 +1850,8 @@ async function doScan(){
   if(!curImgs.length){toast("先选一张图");return}
   const mode=$("scanMode").value;
   const sys=mode==="pack"
-    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取中国国标 GB 28050 的强制标示项：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)，另外尽量给出膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注的项目按同类食品合理估算。另外给两个字段：grams = 这一份（一包/一瓶/一袋）的可食部总重量，标签上有净含量就按净含量，没有就按常见包装规格估；note = 一句话说明你看到了什么、怎么判断的（20 字以内，说人话）。只返回JSON，格式：{"name":"具体商品名","grams":整份克数,"note":"一句话","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`
-    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)、膳食纤维(g)。若多张图是不同食物，取最主要的那一种作为名称。数值参考《中国食物成分表》。若是熟食/菜肴，请特别注意中餐的隐形油盐（炒菜、勾芡、糖醋会显著抬高脂肪和钠），按常见做法估算。**关键**：除了每 100g 的营养值，还要估算这一份**实际的可食部总重量 grams** —— 看盘子/餐盒大小、食物占的面积和堆起来的厚度、跟常见份量比。估不准也要给一个数，别留空。再给一个 note：一句话说明你看到了什么、依据是什么（20 字以内，说人话，不要客套）。只返回JSON，格式：{"name":"食物名","grams":整份克数,"note":"一句话","energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}`;
+    ?`你是中文食品营养成分表识别专家。用户可能上传同一包装食品的多张照片（例如第 1 张是配料表、第 2 张是营养成分表，或不同角度）。请综合所有图片的信息，以每100g可食部为基准提取中国国标 GB 28050 的强制标示项：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)，另外尽量给出膳食纤维(g)。若表中标注的是每份含量，请根据每份克重换算为每100g。没有标注的项目按同类食品合理估算。grams = 这一份（一包/一瓶/一袋）的可食部总重量，标签上有净含量就按净含量，没有就按常见包装规格估。如果照片里有**不止一种食品**（比如一桌菜、一个便当盒），就分别列成多条；只有一种就一条。note = 一句话说明你看到了什么、怎么判断的（20 字以内，说人话）。只返回JSON，格式：{"items":[{"name":"具体商品名","grams":整份克数,"energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}],"note":"一句话"}`
+    :`你是食物营养估算专家。用户可能上传多张食物照片（同一餐的不同菜、或同一食物的不同角度）。请综合所有图片识别出食物，**逐个列出**：盘子里有几样食物就列几条（米饭、炒菜、肉、汤分开算），每种给出可食部每100g的估算值：热量(千卡)、蛋白质(g)、脂肪(g)、饱和脂肪(g)、碳水化合物(g)、糖(g)、钠(mg)、膳食纤维(g)。数值参考《中国食物成分表》。若是熟食/菜肴，请特别注意中餐的隐形油盐（炒菜、勾芡、糖醋会显著抬高脂肪和钠），按常见做法估算。**关键**：每条还要估算这一份**实际的可食部总重量 grams** —— 看盘子/餐盒大小、食物占的面积和堆起来的厚度、跟常见份量比。估不准也要给一个数，别留空。只算能吃的部分，骨头、壳、汤汁不算。再给一个 note：一句话说明整张图（20 字以内，说人话，不要客套）。只返回JSON，格式：{"items":[{"name":"食物名","grams":整份克数,"energy":数值,"protein":数值,"fat":数值,"satfat":数值,"carbs":数值,"sugar":数值,"sodium":数值,"fiber":数值}],"note":"一句话"}`;
   const btn=$("doScan");btn.disabled=true;
   const n=curImgs.length;
   $("scanMsg").innerHTML=`<span>识别中（${n} 张图），请稍候…</span>`;
@@ -1811,17 +1879,20 @@ async function doScan(){
     const m=txt.match(/\{[\s\S]*\}/);
     if(!m)throw new Error("模型没有返回 JSON："+txt.slice(0,80));
     const j=JSON.parse(m[0]);
-    $("rN").value=j.name||"";$("rK").value=j.energy??"";$("rP").value=j.protein??"";
-    $("rF").value=j.fat??"";$("rC").value=j.carbs??"";
-    const put=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
-    put("rFb",j.fiber);put("rNa",j.sodium);put("rSf",j.satfat);put("rSg",j.sugar);
-    // AI 自己估的整份重量：直接填好，用户不用从零想「这盘多少克」
-    put("rG",j.grams);
+    // 兼容两种返回：新的 {items:[...]}，和老的单个对象
+    const arr=Array.isArray(j.items)&&j.items.length?j.items:(j.name?[j]:[]);
+    const num=v=>{const n=Number(v);return isFinite(n)?n:0};
+    scanItems=arr.map(x=>{
+      const nm=String(x.name||"").trim();
+      return {n:nm,g:num(x.grams),k:num(x.energy),p:num(x.protein),f:num(x.fat),
+              c:num(x.carbs),fb:num(x.fiber),na:num(x.sodium),sf:num(x.satfat),sg:num(x.sugar),
+              cat:guessCat(nm)};
+    }).filter(x=>x.n);
+    if(!scanItems.length)throw new Error("模型没认出食物，换一张更清楚的试试");
     aiNote=String(j.note||"").trim();
-    if($("rCat"))$("rCat").value=guessCat(j.name||"");   // 自动归类，用户可改
     $("scanResult").style.display="block";
-    renderPortions();
-    renderAiSummary();
+    showMode("list");
+    renderItems();
     $("scanMsg").innerHTML=`<span style="color:var(--accent)">识别成功（用了 ${n} 张图），请核对数值</span>`;
     $("scanResult").scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
@@ -1864,34 +1935,48 @@ function readR(){
     cat:$("rCat")?$("rCat").value:guessCat(nm)};
 }
 function aiToStock(){
-  const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
-  S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,
-    na:r.na,sf:r.sf,sg:r.sg,cat:r.cat||guessCat(r.n)});
-  save();toast("已加入库存");$("scanResult").style.display="none";go("tab-stock");
+  const list=(scanItems&&scanItems.length)?scanItems:[readR()];
+  const ok=list.filter(r=>r.n&&r.g>0);
+  if(!ok.length){toast("填名称和克重");return}
+  ok.forEach(r=>{
+    S.inv.push({id:uid(),n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,
+      na:r.na,sf:r.sf,sg:r.sg,cat:r.cat||guessCat(r.n)});
+  });
+  save();toast(ok.length>1?`已加入库存 ${ok.length} 条`:"已加入库存");
+  clearScan();go("tab-stock");
 }
 /** 直接记入今日饮食：
     likeStock=true → 从库存里扣（默认）
     likeStock=false → 外食，不动库存（标记 out:true） */
 function aiToLog(out){
-  const r=readR();if(!r.n||r.g<=0){toast("填名称和克重");return}
-  const s={k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,na:r.na,sf:r.sf,sg:r.sg},sc=scale(s,r.g),d=todayStr();
-  S.log[d]=S.log[d]||[];
-  const entry={n:r.n,g:r.g,k:sc.k,p:sc.p,f:sc.f,c:sc.c,fb:sc.fb,na:sc.na,sf:sc.sf,sg:sc.sg};
-  // 若能对应到库存里的同名食材，且用户希望扣库存，则扣减
-  const match=S.inv.find(it=>it.n===r.n&&it.g>=r.g);
-  if(!out&&match){
-    entry.iid=match.id;
-    entry.b={k:match.k,p:match.p,f:match.f,c:match.c,fb:match.fb,
-      na:match.na,sf:match.sf,sg:match.sg,cat:match.cat,low:match.low};
-    match.g=Math.round((match.g-r.g)*10)/10;
-    if(match.g<=0)S.inv=S.inv.filter(x=>x.id!==match.id);
-  }else{
-    entry.out=true;      // 外食：不动库存
-  }
-  S.log[d].push(entry);
+  const list=(scanItems&&scanItems.length)?scanItems:[readR()];
+  const ok=list.filter(r=>r.n&&r.g>0);
+  if(!ok.length){toast("先填名称和克重");return}
+  const d=todayStr();S.log[d]=S.log[d]||[];
+  let hit=0;
+  ok.forEach(r=>{
+    const nut={k:r.k,p:r.p,f:r.f,c:r.c,fb:r.fb,na:r.na,sf:r.sf,sg:r.sg},sc=scale(nut,r.g);
+    const entry={n:r.n,g:r.g,k:sc.k,p:sc.p,f:sc.f,c:sc.c,fb:sc.fb,na:sc.na,sf:sc.sf,sg:sc.sg};
+    // 每条各自去库存里找同名食材扣减；找不到就标成外食，不动库存
+    const match=!out&&S.inv.find(it=>it.n===r.n&&it.g>=r.g);
+    if(match){
+      entry.iid=match.id;
+      entry.b={k:match.k,p:match.p,f:match.f,c:match.c,fb:match.fb,
+        na:match.na,sf:match.sf,sg:match.sg,cat:match.cat,low:match.low};
+      match.g=Math.round((match.g-r.g)*10)/10;
+      if(match.g<=0)S.inv=S.inv.filter(x=>x.id!==match.id);
+      hit++;
+    }else{
+      entry.out=true;
+    }
+    S.log[d].push(entry);
+  });
   save();
-  toast(out||!match?"已记入今日（不影响库存）":"已记入今日，库存已扣减");
-  $("scanResult").style.display="none";go("tab-today");
+  if(out)toast(`已记入 ${ok.length} 条（不影响库存）`);
+  else if(hit===ok.length)toast(ok.length>1?`已记入 ${ok.length} 条，库存都扣了`:"已记入今日，库存已扣减");
+  else if(hit>0)toast(`已记入 ${ok.length} 条，其中 ${hit} 条扣了库存`);
+  else toast(`已记入 ${ok.length} 条（库存里没有匹配的食材）`);
+  clearScan();go("tab-today");
 }
 /** 全屏外食记录：不拍照也能记 */
 function outEatSheet(){
