@@ -639,5 +639,21 @@ nav button{font-size:10px;padding:8px 0 7px}
   transition:transform .15s;
 }
 .aiDetail[open]>summary::before{transform:rotate(90deg)}
+/* 识别出的每一条：一行一件事，右边两个小按钮（改份量 / 删掉） */
+.itemRow{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.itemRow:last-child{border-bottom:0}
+.itemMain{flex:1;min-width:0}
+.itemName{
+  font-size:14px;color:var(--ink);font-weight:500;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.itemMeta{font-size:12px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.itemBtn{
+  flex-shrink:0;width:34px;height:34px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--surface-2);color:var(--ink-2);cursor:pointer;
+}
+.itemBtn:active{background:var(--accent-soft);border-color:var(--accent)}
 .instbar .instx:active{background:var(--line)}
 </style>
