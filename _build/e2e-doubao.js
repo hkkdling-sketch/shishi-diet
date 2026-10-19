@@ -20,7 +20,7 @@ const ok = (c, m) => { if (c) pass++; else { fail++; console.log('  ✗ ' + m); 
 
 const CASES = [
   { name: '通义 DashScope', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
-    model: 'qwen-vl-plus', expect: 'cors-ok' },
+    model: 'qwen3-vl-plus', expect: 'cors-ok' },
   { name: '豆包 火山方舟', url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
     model: 'doubao-seed-2-1-lite-260915', expect: 'cors-blocked' },
   { name: '智谱 bigmodel', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
