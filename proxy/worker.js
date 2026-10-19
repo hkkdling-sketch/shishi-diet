@@ -12,7 +12,13 @@
  */
 
 // 允许的模型白名单：防止有人拿你的 Key 去跑贵模型
-const DEFAULT_MODELS = ['glm-4v-flash', 'glm-4v', 'qwen-vl-plus', 'gpt-4o-mini'];
+// 豆包那几个是为了「上游换成火山方舟」时开箱可用 —— 否则换完上游会直接被 403 挡住
+const DEFAULT_MODELS = [
+  'glm-4v-flash', 'glm-4v',
+  'qwen-vl-plus',
+  'doubao-seed-2-1-lite-260915', 'doubao-seed-2-1-pro-260915',
+  'gpt-4o-mini',
+];
 
 function corsHeaders(env, origin) {
   const allow = (env.ALLOW_ORIGIN || '*').split(',').map(s => s.trim()).filter(Boolean);
