@@ -92,7 +92,7 @@ win.globalThis = win;
 // ---- 执行 ----
 let fn;
 try {
-  fn = new Function(...Object.keys(win), js + '\n;return {calc,load,save,invTotals,renderStock,renderToday,renderMe,go,addFromDb,saveProfile,addEx,quickEat,toast,sheet,applyTheme,toggleTheme,get S(){return S},get SET(){return SET}};');
+  fn = new Function(...Object.keys(win), js + '\n;return {calc,load,save,gapToday,dbSuggest,recentFoods,renderToday,renderMe,renderTrain,go,quickEat,saveProfile,exBurn,isTrainDay,doAddEx,toast,sheet,applyTheme,toggleTheme,get S(){return S},get SET(){return SET},get todayStr(){return todayStr}};');
 } catch (e) {
   console.log('✗ 脚本无法编译:', e.message);
   process.exit(1);
@@ -131,26 +131,23 @@ try {
 } catch (e) { console.log('✗ calc() 抛错:', e.message, '\n', e.stack.split('\n').slice(0, 5).join('\n')); process.exit(1); }
 
 // 渲染流程
-for (const m of ['renderToday', 'renderStock', 'renderMe']) {
+for (const m of ['renderToday', 'renderMe', 'renderTrain']) {
   try { api[m](); console.log('✓ ' + m + '() 成功'); }
   catch (e) { console.log('✗ ' + m + '() 抛错:', e.message, '\n', e.stack.split('\n').slice(0, 5).join('\n')); process.exit(1); }
 }
 
-// 库存增量：加 500g 鸡胸肉，吃掉 150g，验证扣减与退款
+// 记账链路：记一笔 → 最近常吃立刻能取到
 try {
-  api.S.inv = [];
-  $(('q')).value = '鸡'; api.addFromDb();
-  if (!api.S.inv.length) { console.log('! addFromDb 未加入（可能因输入校验），跳过库存测试'); }
-  else {
-    const it = api.S.inv[0];
-    console.log('✓ 加入库存:', it.n, it.g + 'g');
-    const before = api.S.inv[0].g;
-    api.S.log = api.S.log || [];
-    api.S.log.push({ id: 't1', n: it.n, g: 150, k: it.k, p: it.p, f: it.f, c: it.c, src: 'inv', invId: it.id, d: '2026-01-01' });
-    const t1 = api.invTotals();
-    console.log('✓ invTotals() =', JSON.stringify(t1));
-  }
-} catch (e) { console.log('! 库存流程异常（非致命）:', e.message); }
+  const d = api.todayStr();
+  api.S.log = {};
+  api.S.log[d] = [{ n: '鸡胸肉(生)', g: 150, k: 199.5, p: 29.1, f: 7.5, c: 3.75, fb: 0 }];
+  const rec = api.recentFoods(8);
+  if (!rec.length || rec[0].n !== '鸡胸肉(生)') throw new Error('recentFoods 未取到刚记的食物');
+  console.log('✓ 记账 → 最近常吃联动正常:', rec[0].n, rec[0].g + 'g');
+  const ds = api.dbSuggest(api.gapToday());
+  if (!ds || !ds.food || ds.need <= 0) throw new Error('dbSuggest 未给出建议');
+  console.log('✓ dbSuggest() =', ds.dim, ds.food.n, ds.need + 'g');
+} catch (e) { console.log('✗ 记账链路异常:', e.message); process.exit(1); }
 
 // 检查是否有 alert/confirm/prompt 调用
 if (errors.filter(e => /alert\(\) 被调用|confirm\(\) 被调用|prompt\(\) 被调用/.test(e)).length) {
