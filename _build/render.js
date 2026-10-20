@@ -136,8 +136,8 @@ fs.mkdirSync(OUT, { recursive: true });
     console.log(`  [${scheme}] 最近常吃条: ${recentsOk.n} 个 ${recentsOk.firstTxt || ''}`);
     if (!recentsOk.has) errors.push(`[${scheme}] 最近常吃条未渲染（记过一笔就该出现）`);
     else {
-      // 点第一个 → 抽屉打开且克数预填上次的 200
-      await page.click('.recchip');
+      // 点「食物名」→ 抽屉打开且克数预填上次的 200（改克重用）
+      await page.click('.rcmain');
       await page.waitForTimeout(300);
       const relSheet = await page.evaluate(() => ({
         open: document.getElementById('ovl').classList.contains('on'),
@@ -153,6 +153,19 @@ fs.mkdirSync(OUT, { recursive: true });
         document.getElementById('todayBox').innerHTML.includes('250g'));
       if (!logged) errors.push(`[${scheme}] 改过的份量没记进今日`);
       await page.screenshot({ path: path.join(OUT, `03-最近常吃-${scheme}.png`) });
+      // 一键复记：点「记一笔」直接按上次克重记入，不应弹抽屉
+      await page.reload();
+      await page.waitForTimeout(500);
+      const beforeItems = await page.evaluate(() => document.querySelectorAll('#todayBox .item').length);
+      await page.click('.rcadd');
+      await page.waitForTimeout(300);
+      const oneTap = await page.evaluate(() => ({
+        sheet: document.getElementById('ovl').classList.contains('on'),
+        items: document.querySelectorAll('#todayBox .item').length,
+      }));
+      if (oneTap.sheet) errors.push(`[${scheme}] 点「记一笔」不应弹出抽屉`);
+      if (oneTap.items <= beforeItems) errors.push(`[${scheme}] 点「记一笔」应直接记入今日`);
+      console.log(`  [${scheme}] 一键复记: 弹窗=${oneTap.sheet} 条目 ${beforeItems}→${oneTap.items}`);
     }
     let sheetOpened = !!recentsOk.has;
 
