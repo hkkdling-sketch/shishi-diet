@@ -1,4 +1,5 @@
-// 专门验证「吃光 → 撤销 → 连自定义提醒线一起还原」
+// 删除记录的边界：删中间一条、删最后一条、删别日期的
+// 库存已删除（2026-10-20），删除路径只剩「从当天 log 里拿掉一条」。
 const fs=require('fs'),path=require('path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
@@ -30,51 +31,72 @@ const win={document,localStorage,navigator:{onLine:true},location:{origin:'https
  caches:{open:()=>Promise.resolve({addAll:()=>Promise.resolve(),put:()=>Promise.resolve(),match:()=>Promise.resolve(null)}),
  keys:()=>Promise.resolve([]),delete:()=>Promise.resolve(true)}};
 win.self=win;win.window=win;win.globalThis=win;
-const A=new Function(...Object.keys(win),js+';return {doEat,delLog,scale,get S(){return S}};')(...Object.values(win));
+const A=new Function(...Object.keys(win),js+';return {delLog,recentFoods,scale,dayTotals,get S(){return S},get todayStr(){return todayStr}};')(...Object.values(win));
 let pass=0,fail=0;
 function t(n,f){try{const r=f();console.log((r===false?'✗':'✓')+' '+n);r===false?fail++:pass++;}catch(e){console.log('✗ '+n+' → '+e.message);fail++}}
 
-console.log('=== 撤销回滚（同一实例，真实状态）===');
-t('场景A：吃 200g（未吃光）→ 撤销 → 克重精确还原',()=>{
-  A.S.inv=[{id:'a',n:'鸡胸肉',k:133,p:19.4,f:5,c:2.5,cat:'protein',g:500,low:250}];
-  A.S.log={};$('eatG').value='200';A.doEat('a');
-  const mid=A.S.inv[0].g;
-  A.delLog(0);
-  const end=A.S.inv[0].g;
-  console.log('   500 → 吃后'+mid+' → 撤销后'+end);
-  return Math.abs(mid-300)<0.01&&Math.abs(end-500)<0.01});
-t('场景B：吃光（条目被移除）→ 撤销 → 条目重建+克重+分类+提醒线全还原',()=>{
-  A.S.inv=[{id:'b',n:'鸡蛋(全蛋)',k:144,p:13.3,f:8.8,c:2.8,cat:'protein',g:300,low:80}];
-  A.S.log={};$('eatG').value='300';A.doEat('b');
-  const gone=A.S.inv.length===0;
-  A.delLog(0);
-  const back=A.S.inv.find(x=>x.id==='b');
-  console.log('   吃光移除='+gone+' → 重建: '+(back?`${back.g}g / ${back.cat} / low=${back.low}`:'失败'));
-  return gone&&back&&Math.abs(back.g-300)<0.01&&back.cat==='protein'&&back.low===80});
-t('场景C：多次记录后撤销中间一条，其余不受影响',()=>{
-  A.S.inv=[{id:'c',n:'A',k:100,p:10,f:1,c:0,cat:'protein',g:1000,low:100}];
+console.log('=== 删除记录的边界情况 ===');
+t('场景A：删中间一条，其余记录和热量不受影响',()=>{
+  const d=A.todayStr();
   A.S.log={};
-  $('eatG').value='100';A.doEat('c');   // 记录0
-  $('eatG').value='200';A.doEat('c');   // 记录1
-  const g2=A.S.inv[0].g;
-  A.delLog(0);                          // 删第一条(100g)
-  const g3=A.S.inv[0].g;
-  const n=A.S.log[Object.keys(A.S.log)[0]].length;
-  console.log('   1000 -100 -200 = '+g2+' → 撤销第一条(100g) → '+g3+'，剩余记录 '+n+' 条');
-  return Math.abs(g2-700)<0.01&&Math.abs(g3-800)<0.01&&n===1});
-t('场景D：无库存关联的纯记录，撤销不报错',()=>{
+  A.S.log[d]=[
+    {n:'米饭(熟)',g:150,k:174,p:3.9,f:0.45,c:38.85,fb:0.45},
+    {n:'西兰花',g:120,k:50,p:3.8,f:2.2,c:6.1,fb:3.12},
+    {n:'鸡胸肉(生)',g:100,k:133,p:19.4,f:5,c:2.5,fb:0},
+  ];
+  A.delLog(1);                          // 删西兰花
+  const list=A.S.log[d];
+  console.log('   剩 '+list.length+' 条 / 总热量 '+Math.round(A.dayTotals().k)+' kcal');
+  return list.length===2&&list[0].n==='米饭(熟)'&&list[1].n==='鸡胸肉(生)'&&
+         Math.abs(A.dayTotals().k-307)<1;     // 174+133=307
+});
+
+t('场景B：删到最后一条变空数组',()=>{
+  const d=A.todayStr();
+  A.S.log={};A.S.log[d]=[{n:'鸡蛋',g:60,k:86,p:7.6,f:5.5,c:0.6,fb:0}];
+  A.delLog(0);
+  console.log('   剩 '+A.S.log[d].length+' 条 / 热量 '+A.dayTotals().k);
+  return A.S.log[d].length===0&&A.dayTotals().k===0;
+});
+
+t('场景C：删别日期的记录，不动今天',()=>{
+  const d=A.todayStr();
   A.S.log={};
-  A.S.log['2026-01-01']=[{n:'外食',g:300,k:600,p:20,f:10,c:80}];
-  A.delLog(0,'2026-01-01');
-  return A.S.log['2026-01-01'].length===0});
-t('场景E：删除不存在的索引安全返回',()=>{
-  A.S.log={};A.delLog(99);A.delLog(99,'2026-01-01');
-  return true});
-t('场景F：指定日期删除会退回对应库存',()=>{
-  A.S.inv=[{id:'f',n:'A',k:100,p:10,f:1,c:0,cat:'protein',g:100,low:50}];
-  A.S.log={'2026-01-01':[{n:'A',g:40,k:40,p:4,f:0.4,c:0,iid:'f',b:{k:100,p:10,f:1,c:0,cat:'protein',low:50}}]};
-  A.delLog(0,'2026-01-01');
-  console.log('   跨日期撤销 → 库存 '+A.S.inv[0].g+'g，记录 '+A.S.log['2026-01-01'].length+' 条');
-  return Math.abs(A.S.inv[0].g-140)<0.01&&A.S.log['2026-01-01'].length===0});
+  A.S.log[d]=[{n:'今天的饭',g:300,k:400}];
+  A.S.log['2026-01-01']=[{n:'昨天的饭',g:300,k:400},{n:'多记的',g:100,k:120}];
+  A.delLog(1,'2026-01-01');
+  console.log('   昨天剩 '+A.S.log['2026-01-01'].length+' 条 / 今天剩 '+A.S.log[d].length+' 条');
+  return A.S.log['2026-01-01'].length===1&&A.S.log[d].length===1;
+});
+
+t('场景D：删不存在的索引不报错（含别日期）',()=>{
+  const d=A.todayStr();
+  A.S.log={};A.S.log[d]=[{n:'A',g:100,k:100}];
+  A.delLog(99);
+  A.delLog(99,'2026-01-01');
+  console.log('   剩 '+A.S.log[d].length+' 条');
+  return A.S.log[d].length===1;
+});
+
+t('场景E：删过的记录不再进「最近常吃」',()=>{
+  const d=A.todayStr();
+  A.S.log={};
+  A.S.log[d]=[{n:'米饭(熟)',g:150},{n:'西兰花',g:120}];
+  A.delLog(1);                          // 删掉西兰花
+  const r=A.recentFoods(8);
+  console.log('   最近常吃: '+r.map(x=>x.n).join(', '));
+  return r.length===1&&r[0].n==='米饭(熟)';
+});
+
+t('场景F：连删两次不会删到别处去',()=>{
+  const d=A.todayStr();
+  A.S.log={};
+  A.S.log[d]=[{n:'A',g:100,k:100},{n:'B',g:100,k:100},{n:'C',g:100,k:100}];
+  A.delLog(1);A.delLog(1);                   // 连续删索引 1
+  const left=A.S.log[d].map(x=>x.n).join(',');
+  console.log('   剩 '+A.S.log[d].length+' 条: '+left);
+  return A.S.log[d].length===1&&A.S.log[d][0].n==='A';   // B、C 都被删掉
+})
+
 console.log('\n通过 '+pass+' / 失败 '+fail);
 process.exit(fail?1:0);
