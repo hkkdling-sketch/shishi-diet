@@ -112,13 +112,14 @@ $('rN').value = '没听说过的东西';
 api.renderPortions();
 ok($('portionBox').innerHTML.indexOf('一把') >= 0, '认不出也能按分类给出通用份量');
 
-/* ---------- 5. 吃掉弹层的快捷按钮也要用份量单位 ---------- */
-// 真实事故（流程评审实测）：库存 2000g 鸡胸肉时，快捷按钮是
-// 500/1000/1500/2000g —— 按库存百分比算的。用户想记 150g，
-// 最近选项 1000g，误差 +850g，按钮完全没用。
-ok(!/it\.g\s*\*\s*0\.25/.test(js), '吃掉弹层不能用库存 25% 当快捷选项');
-ok(/portionsFor\(it\.n\s*,\s*it\.cat\)/.test(js), '吃掉弹层要用份量表给快捷选项');
-ok(js.includes('if(!quicks.length)'), '库存比最小份量还少时要有「全部」兜底');
+/* ---------- 5. 份量记忆：再记一笔时预填上次的克重 ---------- */
+// 库存删除后（2026-10-20），「上次吃多少」由 recentFoods 从历史日记里取，
+// 克数取最近一次出现的值 —— 这是对标 MyFitnessPal / Cal AI「Recent/Frequent」
+// 的家常版，零额外维护成本。
+ok(/function recentFoods/.test(js), '要有 recentFoods 从日记取最近常吃');
+ok(js.includes('m.g=e.g;'), '克重取最近一次出现的值（后写覆盖先写）');
+ok(/function relSheet/.test(js), '再记一要点一下就能改克重');
+ok(/maxWidth|max-width/.test(js) || /slice\(0/.test(js), '最近常吃要有数量上限，不能无限长');
 
 console.log(`通过 ${pass} / 失败 ${fail}`);
 if (fail) process.exit(1);
