@@ -2126,3 +2126,100 @@ Use realistic portion estimates.
 
 - 445 条断言（新增 4 条守住「主操作不绑库存」）+ 4 个浏览器套件
 - `BUILD` → `2026-10-19f`
+
+---
+
+## 十八、第十八轮：把库存整个删掉
+
+用户原话：「**更彻底地把库存功能整个删掉。你去对标市面上的类似软件或者工具或者
+GitHub 上面，帮我重新深度修改一下。**」
+
+### 18.1 调研结论：主流 App 没有一家做食材库存
+
+对标 MyFitnessPal / Cal AI / MacroFactor / YAZIO / Lose It! 与 GitHub 上的
+开源 photo-logging 项目（calri.app、CaloScanAi_Claude、Cal33、CaloriePix 等），
+共同形态只有四件：
+
+1. **拍照 / 扫条形码即记**（photo-first，追求记录速度）
+2. **最近常吃 / Recent / Frequent** —— 让"一天要吃好几次"不重复输入
+3. **份量记忆** —— 克数默认填上次吃的那个值
+4. **当日目标进度 + 周趋势**
+
+**没有任何一家做「入库 → 吃 → 扣减 → 补货 → 采购清单」这套。**
+识食此前以库存为核心记账单位，等于给所有用户加了一道
+「先维护厨房」的前置工序——这正是"记录一天饮食"最大的阻力来源。
+
+上一轮（第 22 节）只砍掉了强制路径，功能还在。这一轮**连根删**。
+
+### 18.2 删掉什么
+
+| 删除项 | 位置 |
+|---|---|
+| `tab-stock` 整页（概览 / 提醒 / 缺口 / 分类筛选 / 手动入库表单） | `new_body.html` |
+| `S.inv` 状态字段与 `norm()` 兜底 | `new_app.js` |
+| 库存主界面 `renderStock` 及配套 11 个函数 | `renderStock / setStockView / showShopping / copyShopping / detailSheet / setLow / doSetLow / eatSheet / setEat / doEat / restockSheet` |
+| 补货 / 删除 / 清空 | `delInvAsk / doDelInv / clearInvAsk / doClearInv / invMenu / restockAllLow / doRestockAllLow` |
+| 库存统计与预测 | `invTotals / dailyBurn / dailyBurnAll / daysLeft / recentIntake / lowThreshold / shoppingList` |
+| 库存版缺口推荐 | `feedSuggest / proteinSuggest` |
+| 识别结果投递 | `aiToStock`；`aiToLog` 去掉扣库存分支与 `iid`/`b` 字段 |
+| 删除记录的库存回滚 | `delLog` 的 `e.iid` 分支 |
+| 底部导航「库存」tab | nav（5 → 4 项）|
+| `edge-inv.js` 测试套件 | 35 条 |
+
+**净删除约 500 行 JS**，index.html 从 213657 字节降到 185699 字节（−27.8 KB）。
+
+### 18.3 补上什么：最近常吃 + 份量记忆
+
+对标结论里最有价值、又最省事的两个模式：
+
+```js
+/** 从全部历史日记取每种食物最近一次的克重（份量记忆） */
+function recentFoods(limit=8){
+  const map={};
+  const days=Object.keys(S.log).sort();
+  for(const d of days)for(const e of S.log[d]){
+    const n=e.n; if(!n)continue;
+    const m=map[n]||(map[n]={n,g:0,c:0,last:d});
+    m.c++; m.last=d; m.g=e.g;      // 后写覆盖先写 = 最近一次的克重
+  }
+  return Object.values(map).sort((a,b)=>b.last.localeCompare(a.last)).slice(0,limit);
+}
+```
+
+- **今日页新增「最近常吃」横滑条**：上限 8 个，只占一格，带克重
+- **点一下再记一笔**：克数**自动预填上次吃的值**，可改，改完直接记
+- **零维护**：不需要任何额外操作，记录自动沉淀；记录被删掉就不再出现
+- 库外食物（AI 识别出的未知菜）也能进——只记名称和克重，不编营养数据
+
+另外把「缺口该补什么」从库存内推荐改成**内置食物库推荐** `dbSuggest`，
+按最大缺口维度（蛋白 → 纤维 → 碳水）挑密度最高的食材，一键带进快速记录。
+
+### 18.4 设计上的取舍
+
+**为什么不用"固定收藏夹"而用历史日记推导？**
+固定收藏夹要用户主动维护，多数人不会用。历史日记是已经存在的数据，
+识别"你最近常吃什么"比让用户自己整理更容易。
+
+**为什么克数取"最近一次"而不是"平均"或"最常见"？**
+健身的人每次自己做饭的份量是稳定的（同一碗、同一勺）。
+最近一次比平均更接近"这顿大概多少"。
+
+**代价**：删了库存意味着"我还剩多少菜"不在识食的能力范围内了。
+这是**有意为之**——对标证明这不是记录类 App 的核心诉求。
+
+### 18.5 测试同步
+
+- 删 `edge-inv.js`（35 条），`test.sh` / `verify-skill.js` 的套件列表同步
+- `edge3.js` 原 6 条全是库存闭环 → 重写为缺口反推 / 食物推荐 / 最近常吃
+- `edge-undo.js` 原 6 条全依赖 `doEat` → 重写为删除记录的边界
+- `edge-multi.js` 补 4 条"库存已彻底移除"的回归断言 + 最近常吃 3 条
+- `edge-train.js` 库存推荐 7 条 → 改用 `dbSuggest`
+- `edge-portion.js` 末条断言换成份量记忆
+- 445 条 → **412 条**，浏览器端到端从"走库存流程"改为"走最近常吃流程"
+- render.js 导航断言 5 → 4
+
+### 18.6 构建产物
+
+- 412 条断言 + 4 个浏览器套件全部通过
+- `BUILD` → `2026-10-20a`；`sw.js` VERSION → `shishi-2026-10-20`
+- 体积 185699 字节 / 181 KB
