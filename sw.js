@@ -3,7 +3,7 @@
  * 关键修复：不再"缓存优先永不更新"。旧版本用 cache-first + 硬编码版本号，
  *           导致用户永远看到第一版；现在改为后台更新 + 版本号自动跟随。
  */
-const VERSION = 'shishi-2026-10-19';
+const VERSION = 'shishi-2026-10-20';
 const CORE = ['./', './index.html', './manifest.json',
               './icon-192.png', './icon-512.png'];
 
