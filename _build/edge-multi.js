@@ -44,6 +44,7 @@ win.self = win; win.window = win; win.globalThis = win;
 
 const api = new Function(...Object.keys(win), js +
   ';return {renderItems,delItem,saveItemG,clearScan,showMode,renderAiSummary,aiToLog,readR,recentFoods,dbSuggest,' +
+  'memGrams,applyMem,quickRel,doRelGrams,doRel,' +
   'get scanItems(){return scanItems}, set scanItems(v){scanItems=v},' +
   'set aiNote(v){aiNote=v}, get S(){return S}, todayStr,uid};')(...Object.values(win));
 
@@ -165,6 +166,34 @@ api.S.log[api.todayStr()] = [{ n: '未知菜', g: 80 }];
 // recentFoods 会跳过没有名字的条目
 const r2 = api.recentFoods(8);
 ok(r2.length === 1 && r2[0].n === '未知菜', '没有营养数据的食物也能进最近常吃');
+
+/* ---------- 12. 份量记忆：memGrams / applyMem / 一键复记 ---------- */
+api.S.log = {};
+api.S.log[api.todayStr()] = [
+  { n: '鸡胸肉', g: 150 },
+  { n: '鸡胸肉', g: 180 },
+  { n: '米饭(熟)', g: 200 },
+];
+ok(api.memGrams('鸡胸肉') === 180, 'memGrams 取最近一次 180g（实际 ' + api.memGrams('鸡胸肉') + '）');
+ok(api.memGrams('米饭(熟)') === 200, 'memGrams 取米饭 200g');
+ok(api.memGrams('不存在的食物') === 0, 'memGrams 没记过的食物返回 0');
+
+// 识别结果命中常吃 → 用上次克重预填并标 mem（营养仍用 AI 估的每100g 值，只改克重）
+const it = { n: '鸡胸肉', g: 999, k: 133, p: 0, f: 0, c: 0, fb: 0, na: 0, sf: 0, sg: 0 };
+api.applyMem(it);
+ok(it.g === 180, 'applyMem 把克重覆盖成记忆的 180g（实际 ' + it.g + '）');
+ok(it.mem === true, 'applyMem 要标记 it.mem=true');
+const it2 = { n: '从来没吃过', g: 50 };
+api.applyMem(it2);
+ok(it2.g === 50 && !it2.mem, '没命中常吃就不改克重、不标 mem');
+
+// 一键复记：按上次克重直接记入今日，不弹层
+const beforeN = (api.S.log[api.todayStr()] || []).length;
+api.quickRel('鸡胸肉');
+const tlog = api.S.log[api.todayStr()];
+ok(tlog.length === beforeN + 1, 'quickRel 应往今日多记一笔');
+const added = tlog[tlog.length - 1];
+ok(added.n === '鸡胸肉' && added.g === 180, 'quickRel 记的是常吃克重 180g');
 
 console.log(`通过 ${pass} / 失败 ${fail}`);
 if (fail) process.exit(1);
