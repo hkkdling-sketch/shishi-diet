@@ -5,7 +5,7 @@
 
 /* 构建日期。每次发布改这里 —— 用户能一眼看到自己跑的是哪版，
    省掉「到底是代码问题还是他没更新」这种来回猜。 */
-const BUILD="2026-10-20a";
+const BUILD="2026-10-20b";
 
 /* ================= 内置数据（中国食物成分表，每100g可食部，约值）
    fb = 膳食纤维 g/100g（缺项按同类保守估） ================= */
@@ -868,11 +868,14 @@ function renderToday(){
     </div>`;
   }
 
-  // ---- 最近常吃：从日记里取，点一下再记一笔（替代库存「吃掉」的便捷入口） ----
+  // ---- 最近常吃：从日记里取，点「记一笔」直接按上次克重记入（替代库存「吃掉」的便捷入口） ----
   const rec=recentFoods(8);
   if(rec.length){
-    h+=`<div class="card"><h3>${ic("repeat",18)}最近常吃<span class="count">点一下再记一笔</span></h3>
-      <div class="recstrip">${rec.map(r=>`<button class="recchip" onclick="relSheet('${esc(r.n)}',${r.g})">${esc(r.n)}<span>${Math.round(r.g)}g</span></button>`).join("")}</div></div>`;
+    h+=`<div class="card"><h3>${ic("repeat",18)}最近常吃<span class="count">点「记一笔」直接记</span></h3>
+      <div class="recstrip">${rec.map(r=>`<div class="recchip">
+        <button class="rcmain" onclick="relSheet('${esc(r.n)}',${r.g})" title="点这里改克重">${esc(r.n)}<span>${Math.round(r.g)}g</span></button>
+        <button class="rcadd" onclick="quickRel('${esc(r.n)}',${r.g})" aria-label="记一笔">记一笔</button>
+      </div>`).join("")}</div></div>`;
   }
 
   const l=S.log[d]||[];
@@ -1024,6 +1027,19 @@ function recentFoods(limit=8){
     .sort((a,b)=>b.last.localeCompare(a.last))
     .slice(0,limit);
 }
+/** 从日记里取某食物最近一次记的克重（份量记忆的只读查询版，不限 top8）。
+    精确名优先，其次包含匹配；同日多次取最后一次。给 AI 识别预填和一键复记共用。 */
+function memGrams(name){
+  if(!name)return 0;
+  const days=Object.keys(S.log).sort();
+  let g=0,last="";
+  for(const d of days)for(const e of (S.log[d]||[])){
+    if(!e.n)continue;
+    const hit=e.n===name||name.indexOf(e.n)>=0||e.n.indexOf(name)>=0;
+    if(hit&&d>=last){g=e.g;last=d;}
+  }
+  return g||0;
+}
 /** 最近常吃的点按弹层：克数预填上次的值，可改 */
 function relSheet(n,g){
   const grams=Math.round(g)||100;
@@ -1034,9 +1050,10 @@ function relSheet(n,g){
     <button class="btn-g" onclick="doRel('${esc(n)}')">记入今日</button></div>`);
   setTimeout(()=>{const el=$("relG");if(el)el.select()},120);
 }
-/** 再记一笔：优先取内置库营养，库里没有时只记名字和克重 */
-function doRel(n){
-  const g=parseFloat(($("relG")||{}).value)||0;
+/** 再记一笔：优先取内置库营养，库里没有时只记名字和克重。
+    silent=true 时不做弹层关闭（一键复记直接走），否则从弹层输入读克重。 */
+function doRelGrams(n,g,silent){
+  g=g||memGrams(n)||100;
   if(g<=0){toast("克重要大于 0");return}
   const fd=FOODS.find(x=>x.n===n)||FOODS.find(x=>n.indexOf(x.n)>=0||x.n.indexOf(n)>=0);
   const d=todayStr();S.log[d]=S.log[d]||[];
@@ -1046,8 +1063,20 @@ function doRel(n){
   }else{
     S.log[d].push({n,g});
   }
-  save();closeSheet();renderToday();
-  toast(fd?"已再记一笔":"已记入（这个食物不在内置库，只记了克重）");
+  save();
+  if(!silent)closeSheet();
+  renderToday();
+  toast(fd?`已记 ${n} ${Math.round(g)}g`:`已记入（${n} 不在内置库，只记了克重）`);
+}
+/** 从弹层点「记入今日」：读输入框的克重 */
+function doRel(n){
+  const g=parseFloat(($("relG")||{}).value)||0;
+  if(g<=0){toast("克重要大于 0");return}
+  doRelGrams(n,g,false);
+}
+/** 一键复记：直接按上次克重记入今日，零弹层零字段 */
+function quickRel(n,g){
+  doRelGrams(n,g||memGrams(n)||100,true);
 }
 
 
@@ -1118,6 +1147,13 @@ function showMode(which){
   // 份量按钮只在手填时用；识别结果里每条自己带「改份量」
   if(pb)pb.style.display=which==="form"?"block":"none";
 }
+/** 把识别结果套用份量记忆：命中最常吃时用上次克重预填，标 it.mem。
+    营养仍用 AI 估的每100g 值，只改克重。抽成独立函数便于单测。 */
+function applyMem(it){
+  const mg=memGrams(it.n);
+  if(mg>0){it.g=mg;it.mem=true;}
+  return it;
+}
 /** 渲染识别出的条目：一条一行，能单独改份量、单独删 */
 function renderItems(){
   const box=$("itemList");if(!box)return;
@@ -1128,10 +1164,11 @@ function renderItems(){
     const meta=[it.g>0?it.g+" g":"重量待确认"];
     if(it.g>0&&fb>0)meta.push("纤维 "+fb+" g");
     if(it.g>0&&kc>0)meta.push(kc+" kcal");
+    const memTag=it.mem?`<span class="memtag">按常吃</span>`:"";
     return `<div class="itemRow">
       <div class="itemMain">
         <div class="itemName">${esc(it.n)}</div>
-        <div class="itemMeta">${meta.join(" · ")}</div>
+        <div class="itemMeta">${meta.join(" · ")}${memTag}</div>
       </div>
       <button class="itemBtn" onclick="editItem(${i})" aria-label="改份量">${ic("pencil",15)}</button>
       <button class="itemBtn" onclick="delItem(${i})" aria-label="删掉这一条">${ic("trash",15)}</button>
@@ -1151,7 +1188,7 @@ function editItem(i){
   const it=scanItems[i];if(!it)return;
   const list=portionsFor(it.n,it.cat);
   sheet(`<h3>${esc(it.n)}</h3>
-    <div class="hint" style="margin-bottom:12px"><span>AI 估的是 <b>${it.g>0?it.g+" g":"未知"}</b>，觉得不对就点一个，或直接填克数</span></div>
+    <div class="hint" style="margin-bottom:12px"><span>${it.mem?`已按你<b>常吃份量 ${it.g} g</b>预填，可直接确定`:`AI 估的是 <b>${it.g>0?it.g+" g":"未知"}</b>`}，觉得不对就点一个，或直接填克数</span></div>
     <div class="plist" style="margin-bottom:12px">${list.map(([u,g])=>
       `<button class="pbtn" onclick="setItemG(${i},${g})">${esc(u)}<span class="pg">${g} g</span></button>`).join("")}</div>
     <div class="fld"><label>克数 (g)</label><input id="eiG" type="number" inputmode="decimal" value="${it.g>0?it.g:""}"></div>
@@ -1428,6 +1465,9 @@ async function doScan(){
               c:num(x.carbs),fb:num(x.fiber),na:num(x.sodium),sf:num(x.satfat),sg:num(x.sugar),
               cat:guessCat(nm)};
     }).filter(x=>x.n);
+    // 份量记忆：识别出的食物若命中「最近常吃」，用上次记的克重预填，
+    // 不必手动改数；营养仍用 AI 估的每100g 值，只改克重，并标 it.mem。
+    scanItems.forEach(applyMem);
     if(!scanItems.length)throw new Error("模型没认出食物，换一张更清楚的试试");
     aiNote=String(j.note||"").trim();
     $("scanResult").style.display="block";
