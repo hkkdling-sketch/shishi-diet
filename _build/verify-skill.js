@@ -18,7 +18,6 @@ const SKILL_DIRS = [
 // 套件 -> [断言函数名, testing.md 表格里的键]
 const SUITES = {
   'edge3.js': 't',
-  'edge-inv.js': 't',
   'edge-undo.js': 't',
   'edge-habit.js': 't',
   'edge-train.js': 't',
