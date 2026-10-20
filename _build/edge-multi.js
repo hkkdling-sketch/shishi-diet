@@ -43,7 +43,7 @@ const win = { document, localStorage, navigator: { onLine: true }, location: { o
 win.self = win; win.window = win; win.globalThis = win;
 
 const api = new Function(...Object.keys(win), js +
-  ';return {renderItems,delItem,saveItemG,clearScan,showMode,renderAiSummary,aiToLog,aiToStock,readR,' +
+  ';return {renderItems,delItem,saveItemG,clearScan,showMode,renderAiSummary,aiToLog,readR,recentFoods,dbSuggest,' +
   'get scanItems(){return scanItems}, set scanItems(v){scanItems=v},' +
   'set aiNote(v){aiNote=v}, get S(){return S}, todayStr,uid};')(...Object.values(win));
 
@@ -103,14 +103,10 @@ api.delItem(0); api.delItem(0);
 ok(api.scanItems.length === 0, '删光后条目为空');
 ok($('scanResult').style.display === 'none', '删光后整个结果区收起');
 
-/* ---------- 7. 分别记账：三条进 log，各自扣库存 ---------- */
+/* ---------- 7. 分别记账：三条进 log，克数各自换算 ---------- */
 api.scanItems = ITEMS.map(x => ({ ...x }));
 api.renderItems();
-api.S.inv = [
-  { id: 'a', n: '米饭(熟)',   g: 500, k: 116, p: 2.6, f: 0.3, c: 25.9, fb: 0.3, na: 2, sf: 0.1, sg: 0.1, cat: 'staple' },
-  { id: 'b', n: '西兰花',     g: 400, k: 42,  p: 3.2, f: 1.8, c: 5.1,  fb: 2.6, na: 180, sf: 0.3, sg: 2.4, cat: 'veg' },
-];
-api.aiToLog(false);
+api.aiToLog();
 const today = api.S.log[api.todayStr()] || [];
 ok(today.length === 3, '三条都要记进今天（实际 ' + today.length + ' 条）');
 ok(today.every(e => e.g > 0), '每条都要有克数');
@@ -118,37 +114,57 @@ const rice = today.find(e => e.n === '米饭(熟)');
 ok(rice && Math.abs(rice.k - 174) < 0.5, '米饭按 150 g 换算成 174 kcal（实际 ' + (rice && rice.k) + '）');
 const broc = today.find(e => e.n === '西兰花');
 ok(broc && Math.abs(broc.fb - 3.1) < 0.2, '西兰花 120 g 的纤维约 3.1 g（实际 ' + (broc && broc.fb) + '）');
-ok(rice && rice.iid === 'a', '米饭扣到了库存');
-ok(broc && broc.iid === 'b', '西兰花扣到了库存');
-const chick = today.find(e => e.n === '鸡胸肉(生)');
-ok(chick && chick.out === true, '库存里没有鸡胸肉，那条要标成外食（不动库存）');
-ok(api.S.inv.find(i => i.id === 'a').g === 350, '米饭库存 500→350');
-ok(api.S.inv.find(i => i.id === 'b').g === 280, '西兰花库存 400→280');
+// 库存已删除：不允许再出现扣库存痕迹
+ok(today.every(e => e.iid === undefined), '记入后不该再带库存 id');
+ok(api.S.inv === undefined, '状态里不该再有 inv 字段');
 
-/* ---------- 8. 外食模式不碰库存 ---------- */
+/* ---------- 8. 删一条记录只动当天的 log ---------- */
 api.S.log = {};
-api.S.inv = [{ id: 'c', n: '西兰花', g: 400, k: 42, p: 3.2, f: 1.8, c: 5.1, fb: 2.6, na: 180, sf: 0.3, sg: 2.4, cat: 'veg' }];
 api.scanItems = [{ ...ITEMS[1] }];
 api.renderItems();
-api.aiToLog(true);
-ok(api.S.inv[0].g === 400, '选「外食」时库存不能动');
-ok((api.S.log[api.todayStr()] || []).length === 1, '外食也要记进今天');
+api.aiToLog();
+const after = api.S.log[api.todayStr()] || [];
+ok(after.length === 1, '再记一笔后今天有 1 条（实际 ' + after.length + '）');
 
-/* ---------- 9. 只加入库存 ---------- */
-api.S.inv = [];
+/* ---------- 9. 清空扫描区不影响已记的账 ---------- */
 api.scanItems = ITEMS.map(x => ({ ...x }));
 api.renderItems();
-api.aiToStock();
-ok(api.S.inv.length === 3, '三条都要加入库存（实际 ' + api.S.inv.length + '）');
-ok(api.S.inv.every(i => i.id && i.n && i.g > 0), '每条库存项都要有 id/名称/克数');
+api.clearScan();
+ok(api.scanItems.length === 0, '清空后条目为空');
+ok($('scanResult').style.display === 'none', '清空后整个结果区收起');
+ok((api.S.log[api.todayStr()] || []).length === 1, '已记进今天的 1 条不受影响');
 
-/* ---------- 10. 主操作不该绑库存 ---------- */
-// 一个人吃饭，「记吃了什么」和「家里还剩什么」是两件事。
-// 主按钮必须只做前者 —— 否则每记一顿都要先维护库存。
-ok(html.includes('onclick="aiToLog(true)">记入今日'), '主按钮是「记入今日」，默认不碰库存');
-ok(!html.includes('就这样记 · 并扣减库存'), '不该再有「记一笔就必须扣库存」的主按钮');
-ok(html.includes('onclick="aiToLog(false)">记入并扣库存'), '扣库存降为次要选项，想用再用');
-ok(html.includes('记录吃了什么不用来这'), '库存页要说明自己不是日常记录入口');
+/* ---------- 10. 库存功能已彻底移除 ---------- */
+// 2026-10-20 决策：库存非主流（对标 MyFitnessPal / Cal AI / MacroFactor /
+// YAZIO / Lose It! 无一家做食材库存），彻底删除，用「最近常吃 + 份量记忆」顶替。
+ok(!html.includes('aiToStock'), '不该再有「加入库存」入口');
+ok(!html.includes('tab-stock'), '页面里不该再有库存 tab');
+ok(!html.includes('onclick="aiToLog(true)">记入今日') && !html.includes('onclick="aiToLog(false)">'),
+  '不该再有需要选「扣不扣库存」的按钮，主按钮只记今天的账');
+ok(!js.includes('function renderStock'), '来源里不该再有 renderStock');
+ok(!js.includes('S.inv'), '来源里不该再读 S.inv');
+// 删除的字段不能被 norm() 重新兜底出来
+api.S.log = {};
+ok(api.S.inv === undefined || api.S.inv === null, 'inv 不再出现在状态里');
+
+/* ---------- 11. 最近常吃：从历史日记取，点一下再记一笔 ---------- */
+api.S.log = {};
+api.S.log[api.todayStr()] = [
+  { n: '米饭(熟)', g: 150, k: 174, p: 3.9, f: 0.45, c: 38.85, fb: 0.45, out: false },
+  { n: '米饭(熟)', g: 200, k: 232, p: 5.2, f: 0.6, c: 51.8, fb: 0.6, out: false },
+];
+const recent = api.recentFoods(8);
+ok(recent.length === 1, '同一种食物只出现一次（实际 ' + recent.length + '）');
+ok(recent[0].g === 200, '克重要取最近一次的 200 g（实际 ' + recent[0].g + '）');
+ok(recent[0].c === 2, '出现次数要数成 2 次（实际 ' + recent[0].c + '）');
+ok(recent[0].last === api.todayStr(), '最近日期是今天');
+
+// 库里没有的克数 → 只记名字和克重，不造数据
+api.S.log = {};
+api.S.log[api.todayStr()] = [{ n: '未知菜', g: 80 }];
+// recentFoods 会跳过没有名字的条目
+const r2 = api.recentFoods(8);
+ok(r2.length === 1 && r2[0].n === '未知菜', '没有营养数据的食物也能进最近常吃');
 
 console.log(`通过 ${pass} / 失败 ${fail}`);
 if (fail) process.exit(1);
